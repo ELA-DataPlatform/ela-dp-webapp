@@ -24,8 +24,8 @@ interface MetricCardProps {
   previousValue: number;
   chartType?: "area" | "bar";
   deltaMode?: "absolute" | "percent";
-  // pour bar : index à partir duquel on considère "cette semaine"
   currentWeekStartIndex?: number;
+  className?: string;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -38,7 +38,7 @@ function ChartTooltip({ active, payload, label, unit }: any) {
         {payload[0].value}
         {unit && <span className="ml-0.5 text-(--color-fg-muted)">{unit}</span>}
       </p>
-      <p className="mt-0.5 text-[11px] text-(--color-fg-subtle)">{dateLabel}</p>
+      <p className="mt-0.5 text-2xs text-(--color-fg-subtle)">{dateLabel}</p>
     </div>
   );
 }
@@ -54,6 +54,7 @@ export function MetricCard({
   chartType = "area",
   deltaMode = "absolute",
   currentWeekStartIndex = 7,
+  className,
 }: MetricCardProps) {
   const rawDelta = currentValue - previousValue;
   const isPositive = rawDelta >= 0;
@@ -64,10 +65,10 @@ export function MetricCard({
       : `${isPositive ? "+" : ""}${Math.round(rawDelta * 10) / 10}`;
 
   return (
-    <div className="flex h-full flex-col rounded-[--radius-md] border border-(--color-border) bg-(--color-bg-elevated) p-5">
+    <div className={cn("flex h-full flex-col rounded-[--radius-md] border border-(--color-border) bg-(--color-bg-elevated) p-5", className)}>
       <div className="flex items-start justify-between gap-4">
         <div className="flex flex-col gap-0.5">
-          <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-(--color-fg-muted)">
+          <span className="text-2xs font-medium uppercase tracking-[0.08em] text-(--color-fg-muted)">
             {title}
           </span>
           {subtitle && (
@@ -84,7 +85,7 @@ export function MetricCard({
           </div>
           <div
             className={cn(
-              "mt-1 flex items-center justify-end gap-1 font-mono text-[11px] tabular-nums",
+              "mt-1 flex items-center justify-end gap-1 font-mono text-2xs tabular-nums",
               isPositive ? "text-(--color-success)" : "text-(--color-danger)"
             )}
           >
@@ -98,7 +99,7 @@ export function MetricCard({
         </div>
       </div>
 
-      <div className="mt-4 min-h-[100px] flex-1">
+      <div className="mt-4 min-h-(--chart-height) flex-1">
         <ResponsiveContainer width="100%" height="100%">
           {chartType === "bar" ? (
             <BarChart data={data} margin={{ top: 8, right: 4, left: 4, bottom: 0 }} barCategoryGap="30%">
@@ -115,7 +116,7 @@ export function MetricCard({
                 content={(props) => <ChartTooltip {...props} unit={unit} />}
                 cursor={false}
               />
-              <Bar dataKey="value" radius={[2, 2, 0, 0]}>
+              <Bar dataKey="value" radius={[2, 2, 2, 2]}>
                 {data.map((_, i) => (
                   <Cell
                     key={i}
@@ -156,7 +157,7 @@ export function MetricCard({
       </div>
 
       {footer && (
-        <p className="mt-3 border-t border-(--color-border) pt-3 text-[11px] text-(--color-fg-subtle)">
+        <p className="mt-3 border-t border-(--color-border) pt-3 text-2xs text-(--color-fg-subtle)">
           {footer}
         </p>
       )}

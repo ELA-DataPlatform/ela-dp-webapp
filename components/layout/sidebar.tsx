@@ -4,14 +4,16 @@ import { cn } from "@/lib/utils";
 interface SidebarProps {
   collapsed: boolean;
   onToggle: () => void;
+  className?: string;
 }
 
-export function Sidebar({ collapsed, onToggle }: SidebarProps) {
+export function Sidebar({ collapsed, onToggle, className }: SidebarProps) {
   return (
     <aside
       className={cn(
         "flex h-full shrink-0 flex-col border-r border-(--color-border) bg-(--color-bg-subtle)",
-        collapsed ? "w-12" : "w-[360px]"
+        collapsed ? "w-12" : "w-[360px]",
+        className
       )}
     >
       <div
