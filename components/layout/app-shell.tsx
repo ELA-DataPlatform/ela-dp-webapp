@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Sidebar } from "./sidebar";
 import { NAV_ITEMS } from "@/lib/nav";
+import { ThemeToggle } from "@/components/theme/theme-toggle";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
@@ -49,6 +50,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             );
           })}
         </nav>
+
+        {/* Theme toggle — ancré en bas de la strip */}
+        <div className="mt-auto flex flex-col items-center pb-2 px-1.5">
+          <ThemeToggle />
+        </div>
       </div>
 
       {/* Backdrop */}

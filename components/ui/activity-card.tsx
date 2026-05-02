@@ -1,3 +1,7 @@
+"use client";
+
+import { useTheme } from "@/components/theme/theme-provider";
+
 // coords: [lat, lng][] — format GPS standard (Garmin, GeoJSON inversé)
 
 interface ActivityStat {
@@ -36,7 +40,7 @@ function encodePolyline(coords: [number, number][]): string {
   return result;
 }
 
-function buildMapboxUrl(coords: [number, number][]): string | null {
+function buildMapboxUrl(coords: [number, number][], dark: boolean): string | null {
   const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
   if (!token || coords.length < 2) return null;
 
@@ -60,16 +64,19 @@ function buildMapboxUrl(coords: [number, number][]): string | null {
   const [startLat, startLng] = coords[0];
   const startPin = `pin-s+2563eb(${startLng},${startLat})`;
 
+  const mapStyle = dark ? "dark-v11" : "light-v11";
   // bearing=0 (nord en haut), pitch=0 (vue strictement zénithale)
   return (
-    `https://api.mapbox.com/styles/v1/mapbox/light-v11/static/` +
+    `https://api.mapbox.com/styles/v1/mapbox/${mapStyle}/static/` +
     `${startPin},${path}/${centerLng},${centerLat},${zoom},0,0/800x400@2x` +
     `?attribution=false&logo=false&access_token=${token}`
   );
 }
 
 function RouteMap({ coordinates }: { coordinates?: [number, number][] }) {
-  const mapboxUrl = coordinates ? buildMapboxUrl(coordinates) : null;
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
+  const mapboxUrl = coordinates ? buildMapboxUrl(coordinates, isDark) : null;
 
   if (mapboxUrl) {
     return (
@@ -79,7 +86,10 @@ function RouteMap({ coordinates }: { coordinates?: [number, number][] }) {
           src={mapboxUrl}
           alt="Tracé GPS"
           className="absolute inset-0 h-full w-full object-cover"
-          style={{ filter: "grayscale(0.3) contrast(1.1)" }}
+          style={isDark
+            ? { filter: "contrast(1.05) brightness(0.9)" }
+            : { filter: "grayscale(0.3) contrast(1.1)" }
+          }
         />
       </div>
     );
