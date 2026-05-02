@@ -9,7 +9,7 @@ export function Sidebar({ onClose }: SidebarProps) {
     <aside className="flex h-full w-[360px] flex-col border-r border-(--color-border) bg-(--color-bg-subtle)">
       <div className="flex h-12 shrink-0 items-center justify-between border-b border-(--color-border) px-4">
         <span className="text-sm font-semibold tracking-[-0.02em] text-(--color-fg)">
-          ELA DP
+          Almanach
         </span>
         <button
           onClick={onClose}
