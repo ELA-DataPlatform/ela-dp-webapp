@@ -3,6 +3,7 @@ import { ActivityCard } from "@/components/ui/activity-card";
 import { SectionHeader } from "@/components/ui/section-header";
 import { TrainingStateCard } from "@/components/ui/training-state-card";
 import { HealthCard } from "@/components/ui/health-card";
+import { MusicListeningCard, MusicRankingCard } from "@/components/ui/music-card";
 
 // ─── Santé — 10 derniers jours (23/4 → 2/5) ───────────────────────────────
 
@@ -60,6 +61,46 @@ const BATTERY_TREND = [
   { day: "30/4", sleep: 44, wake: 88 },
   { day: "1/5",  sleep: 55, wake: 94 },
   { day: "2/5",  sleep: 48, wake: 72 },
+];
+
+// ─── Musique — 10 derniers jours (23/4 → 2/5) ────────────────────────────
+
+// Temps d'écoute quotidien en minutes
+const MUSIC_TREND = [
+  { day: "23/4", value: 48 },
+  { day: "24/4", value: 72 },
+  { day: "25/4", value: 35 },
+  { day: "26/4", value: 91 },
+  { day: "27/4", value: 63 },
+  { day: "28/4", value: 55 },
+  { day: "29/4", value: 0  },
+  { day: "30/4", value: 78 },
+  { day: "1/5",  value: 44 },
+  { day: "2/5",  value: 66 },
+];
+
+const TOP_ARTISTS = [
+  { name: "Pink Floyd",                time: "2h 34",  image: "https://picsum.photos/seed/pinkfloyd/28/28",   rankChange: 2     },
+  { name: "Radiohead",                 time: "1h 47",  image: "https://picsum.photos/seed/radiohead/28/28",   rankChange: 0     },
+  { name: "Bon Iver",                  time: "1h 12",  image: "https://picsum.photos/seed/boniver/28/28",     rankChange: -1    },
+  { name: "Nick Cave & The Bad Seeds", time: "58 min", image: "https://picsum.photos/seed/nickcave/28/28",    rankChange: "new" as const },
+  { name: "The National",              time: "45 min", image: "https://picsum.photos/seed/thenational/28/28", rankChange: -2    },
+];
+
+const TOP_ALBUMS = [
+  { name: "OK Computer",               time: "1h 02", image: "https://picsum.photos/seed/okcomputer/28/28", rankChange: 1          },
+  { name: "The Dark Side of the Moon", time: "43 min", image: "https://picsum.photos/seed/darkside/28/28",  rankChange: 0          },
+  { name: "For Emma, Forever Ago",     time: "38 min", image: "https://picsum.photos/seed/foremma/28/28",   rankChange: -1         },
+  { name: "Push the Sky Away",         time: "35 min", image: "https://picsum.photos/seed/pushsky/28/28",   rankChange: "new" as const },
+  { name: "High Violet",               time: "31 min", image: "https://picsum.photos/seed/highviolet/28/28", rankChange: 2         },
+];
+
+const TOP_TRACKS = [
+  { name: "Pyramid Song", time: "1h 08", image: "https://picsum.photos/seed/pyramidsong/28/28", rankChange: 0          },
+  { name: "Breathe",      time: "54 min", image: "https://picsum.photos/seed/breathe/28/28",    rankChange: 3          },
+  { name: "Holocene",     time: "47 min", image: "https://picsum.photos/seed/holocene/28/28",   rankChange: -1         },
+  { name: "Sorrow",       time: "41 min", image: "https://picsum.photos/seed/sorrow/28/28",     rankChange: "new" as const },
+  { name: "Into My Arms", time: "35 min", image: "https://picsum.photos/seed/intomyarms/28/28", rankChange: -2         },
 ];
 
 // ─── Sport — 14 derniers jours — sem. -1 (index 0-6) + sem. en cours (index 7-13)
@@ -150,6 +191,34 @@ export default function HomePage() {
               [48.8563, 2.3490],
               [48.8566, 2.3522],
             ]}
+          />
+        </div>
+      </section>
+
+      <section className="mt-6 lg:mt-8">
+        <SectionHeader label="Musique · Spotify" />
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 lg:gap-4 lg:auto-rows-[280px]">
+          <MusicListeningCard
+            trend={MUSIC_TREND}
+            totalTime="9h 12"
+            delta="+18% vs préc."
+            deltaTone="success"
+            footer="Temps d'écoute · 10 derniers jours · Spotify"
+          />
+          <MusicRankingCard
+            title="Top Artistes"
+            items={TOP_ARTISTS}
+            footer="10 derniers jours · Spotify"
+          />
+          <MusicRankingCard
+            title="Top Albums"
+            items={TOP_ALBUMS}
+            footer="10 derniers jours · Spotify"
+          />
+          <MusicRankingCard
+            title="Top Titres"
+            items={TOP_TRACKS}
+            footer="10 derniers jours · Spotify"
           />
         </div>
       </section>
