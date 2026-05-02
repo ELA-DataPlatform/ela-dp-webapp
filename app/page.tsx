@@ -110,7 +110,7 @@ export default function HomePage() {
 
       <section>
         <SectionHeader label="Sport · Course à pied" />
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 lg:gap-4">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 lg:gap-4 lg:auto-rows-[280px]">
           <TrainingStateCard
             state="productive"
             metrics={[
@@ -156,7 +156,7 @@ export default function HomePage() {
 
       <section className="mt-6 lg:mt-8">
         <SectionHeader label="Santé · Récupération" />
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 lg:gap-4">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 lg:gap-4 lg:auto-rows-[280px]">
           <HealthCard
             title="Sleep Score"
             avgValue="80 / 100"

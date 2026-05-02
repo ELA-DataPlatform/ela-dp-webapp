@@ -174,7 +174,7 @@ export function ActivityCard({ name, date, meta, stats, coordinates }: ActivityC
         </p>
       </div>
 
-      <div className="min-h-[160px] flex-1 shrink-0 border-b border-(--color-border)">
+      <div className="aspect-[2/1] flex-1 lg:aspect-auto border-b border-(--color-border)">
         <RouteMap coordinates={coordinates} />
       </div>
 
@@ -183,7 +183,7 @@ export function ActivityCard({ name, date, meta, stats, coordinates }: ActivityC
           {stats.slice(0, 4).map((stat) => (
             <div
               key={stat.label}
-              className="flex flex-col justify-center px-4 py-3"
+              className="flex flex-col justify-center px-4 py-2"
             >
               <p className="font-mono text-sm font-medium tabular-nums text-(--color-fg)">
                 {stat.value}
