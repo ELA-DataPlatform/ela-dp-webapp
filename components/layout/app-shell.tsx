@@ -2,11 +2,15 @@
 
 import { useState } from "react";
 import { Menu } from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Sidebar } from "./sidebar";
+import { NAV_ITEMS } from "@/lib/nav";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
+  const pathname = usePathname();
 
   return (
     <div className="flex h-full flex-1 overflow-hidden">
@@ -21,6 +25,30 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <Menu className="h-4 w-4" strokeWidth={1.5} />
           </button>
         </div>
+
+        {/* Nav icons — toujours cliquables même sidebar fermée */}
+        <nav className="flex flex-col gap-0.5 px-1.5 pt-2" aria-label="Navigation principale">
+          {NAV_ITEMS.map((item) => {
+            const isActive = pathname === item.href;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                aria-label={item.label}
+                className={cn(
+                  "flex h-9 w-9 items-center justify-center rounded-[--radius-sm]",
+                  "transition-colors duration-[--duration-base]",
+                  "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-accent)",
+                  isActive
+                    ? "bg-(--color-accent-bg) text-(--color-accent)"
+                    : "text-(--color-fg-subtle) hover:bg-(--color-bg-muted) hover:text-(--color-fg)"
+                )}
+              >
+                <item.icon className="h-4 w-4" strokeWidth={1.5} />
+              </Link>
+            );
+          })}
+        </nav>
       </div>
 
       {/* Backdrop */}
