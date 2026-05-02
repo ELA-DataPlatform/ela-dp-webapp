@@ -32,14 +32,14 @@ interface TrainingStateCardProps {
 function Gauge({ position }: { position: number }) {
   return (
     <div className="relative py-2">
-      <div className="h-[2px] w-full rounded-full bg-(--color-border)" />
+      <div className="h-(--border-width-strong) w-full rounded-full bg-(--color-border)" />
       <div
         className="absolute top-1/2 h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-(--color-fg) ring-2 ring-(--color-bg-elevated)"
         style={{ left: `${position}%` }}
       />
       <div className="mt-2.5 flex justify-between">
-        <span className="text-[11px] text-(--color-fg-subtle)">Désentraîn.</span>
-        <span className="text-[11px] text-(--color-fg-subtle)">Surcharge</span>
+        <span className="text-2xs text-(--color-fg-subtle)">Désentraîn.</span>
+        <span className="text-2xs text-(--color-fg-subtle)">Surcharge</span>
       </div>
     </div>
   );
@@ -54,10 +54,10 @@ export function TrainingStateCard({
   const config = STATE_CONFIG[state];
 
   return (
-    <div className="flex h-full flex-col justify-between rounded-[--radius-md] border border-(--color-border) bg-(--color-bg-elevated) p-6">
+    <div className="flex h-full flex-col justify-between rounded-[--radius-md] border border-(--color-border) bg-(--color-bg-elevated) p-4 lg:p-6">
       {/* Section 1 — titre + état */}
       <div>
-        <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-(--color-fg-muted)">
+        <span className="text-2xs font-medium uppercase tracking-[0.08em] text-(--color-fg-muted)">
           État d'entraînement
         </span>
         <p
@@ -75,10 +75,10 @@ export function TrainingStateCard({
 
       {/* Section 3 — métriques + objectif */}
       <div>
-        <div className="flex gap-6 border-t border-(--color-border) pt-5">
+        <div className="flex flex-wrap gap-4 border-t border-(--color-border) pt-4 lg:gap-6 lg:pt-5">
           {metrics.map((m) => (
             <div key={m.label}>
-              <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-(--color-fg-muted)">
+              <p className="text-2xs font-medium uppercase tracking-[0.08em] text-(--color-fg-muted)">
                 {m.label}
               </p>
               <div className="mt-1 flex items-baseline gap-1.5">
@@ -86,7 +86,7 @@ export function TrainingStateCard({
                   {m.value}
                 </span>
                 {m.detail && (
-                  <span className="text-[11px] text-(--color-fg-subtle)">{m.detail}</span>
+                  <span className="text-2xs text-(--color-fg-subtle)">{m.detail}</span>
                 )}
               </div>
             </div>
@@ -95,7 +95,7 @@ export function TrainingStateCard({
 
         {goal && goalDaysLeft !== undefined && (
           <div className="mt-4 flex items-center justify-between border-t border-(--color-border) pt-3">
-            <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-(--color-fg-muted)">
+            <span className="text-2xs font-medium uppercase tracking-[0.08em] text-(--color-fg-muted)">
               {goal}
             </span>
             <span className="font-mono text-sm font-semibold tabular-nums text-(--color-fg)">

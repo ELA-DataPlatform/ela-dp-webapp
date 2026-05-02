@@ -165,16 +165,16 @@ export function ActivityCard({ name, date, meta, stats, coordinates }: ActivityC
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-[--radius-md] border border-(--color-border) bg-(--color-bg-elevated)">
       <div className="shrink-0 px-4 pt-4 pb-3 border-b border-(--color-border)">
-        <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-(--color-fg-muted)">
+        <span className="text-2xs font-medium uppercase tracking-[0.08em] text-(--color-fg-muted)">
           Dernière activité
         </span>
         <p className="mt-1.5 text-sm font-medium text-(--color-fg)">{name}</p>
-        <p className="mt-0.5 text-[11px] text-(--color-fg-subtle)">
+        <p className="mt-0.5 text-2xs text-(--color-fg-subtle)">
           {date}{meta && <span> · {meta}</span>}
         </p>
       </div>
 
-      <div className="flex-1 shrink-0 border-b border-(--color-border)">
+      <div className="aspect-[2/1] flex-1 lg:aspect-auto border-b border-(--color-border)">
         <RouteMap coordinates={coordinates} />
       </div>
 
@@ -183,12 +183,12 @@ export function ActivityCard({ name, date, meta, stats, coordinates }: ActivityC
           {stats.slice(0, 4).map((stat) => (
             <div
               key={stat.label}
-              className="flex flex-col justify-center px-4 py-3"
+              className="flex flex-col justify-center px-4 py-2"
             >
               <p className="font-mono text-sm font-medium tabular-nums text-(--color-fg)">
                 {stat.value}
               </p>
-              <p className="mt-0.5 text-[11px] text-(--color-fg-subtle)">{stat.label}</p>
+              <p className="mt-0.5 text-2xs text-(--color-fg-subtle)">{stat.label}</p>
             </div>
           ))}
         </div>

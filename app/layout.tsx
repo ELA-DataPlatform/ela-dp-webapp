@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ELA DP",
+  title: "Almanach",
   description: "Quantified self — running, music, health",
 };
 
