@@ -2,9 +2,15 @@
 
 import { cn } from "@/lib/utils";
 import {
-  AreaChart, Area, YAxis, ResponsiveContainer, Tooltip,
+  AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip,
   BarChart, Bar, LabelList, ReferenceLine,
 } from "recharts";
+
+function dayLetter(dayStr: string): string {
+  const [d, m] = dayStr.split("/").map(Number);
+  const year = new Date().getFullYear();
+  return ["S","M","T","W","T","F","S"][new Date(year, m - 1, d).getDay()];
+}
 
 type Tone = "success" | "warning" | "danger" | "neutral";
 
@@ -154,8 +160,17 @@ export function HealthCard({
         <div className="h-(--chart-height-bar)">
           <ResponsiveContainer width="100%" height="100%">
             {chartType === "battery-bar" ? (
-              <BarChart data={batteryData} barCategoryGap="30%" margin={{ top: 16, right: 0, bottom: 0, left: 0 }}>
+              <BarChart data={batteryData} barCategoryGap="30%" margin={{ top: 16, right: 0, bottom: 4, left: 0 }}>
                 <YAxis hide domain={[0, 100]} />
+                <XAxis
+                  dataKey="day"
+                  tickFormatter={dayLetter}
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fontSize: 10, fontFamily: "var(--font-mono)", fill: "var(--color-fg-subtle)" }}
+                  interval={0}
+                  height={18}
+                />
                 <Tooltip content={<BatteryTooltip />} cursor={false} />
                 <ReferenceLine
                   y={avgWake}
