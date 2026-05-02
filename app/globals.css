@@ -1,26 +1,101 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-geist-sans), "Inter", system-ui, -apple-system, sans-serif;
+  --font-mono: var(--font-geist-mono), "JetBrains Mono", ui-monospace, monospace;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* ─── Light mode ──────────────────────────────────────────── */
+:root {
+  /* Backgrounds */
+  --color-bg: oklch(0.99 0 0);
+  --color-bg-subtle: oklch(0.975 0 0);
+  --color-bg-muted: oklch(0.96 0 0);
+  --color-bg-elevated: oklch(1 0 0);
+
+  /* Borders */
+  --color-border: oklch(0.92 0 0);
+  --color-border-strong: oklch(0.85 0 0);
+
+  /* Foregrounds */
+  --color-fg: oklch(0.18 0 0);
+  --color-fg-muted: oklch(0.45 0 0);
+  --color-fg-subtle: oklch(0.62 0 0);
+  --color-fg-disabled: oklch(0.78 0 0);
+
+  /* Accent — bleu, usage exclusif : actif / focus / sélection */
+  --color-accent: oklch(0.55 0.22 255);
+  --color-accent-hover: oklch(0.50 0.22 255);
+  --color-accent-bg: oklch(0.97 0.03 255);
+  --color-accent-fg: oklch(1 0 0);
+
+  /* Sémantique */
+  --color-success: oklch(0.62 0.18 145);
+  --color-warning: oklch(0.72 0.18 75);
+  --color-danger: oklch(0.58 0.22 25);
+
+  /* Data viz */
+  --color-chart-1: oklch(0.18 0 0);
+  --color-chart-2: oklch(0.55 0.22 255);
+  --color-chart-3: oklch(0.62 0 0);
+  --color-chart-4: oklch(0.78 0 0);
+
+  /* Rayons */
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-full: 9999px;
+
+  /* Ombres — réservées aux éléments flottants */
+  --shadow-sm: 0 1px 2px 0 oklch(0 0 0 / 0.05);
+  --shadow-md: 0 2px 8px -2px oklch(0 0 0 / 0.08), 0 1px 2px 0 oklch(0 0 0 / 0.04);
+  --shadow-lg: 0 8px 24px -8px oklch(0 0 0 / 0.12), 0 2px 4px 0 oklch(0 0 0 / 0.04);
+  --shadow-modal: 0 24px 48px -12px oklch(0 0 0 / 0.20);
+
+  /* Transitions */
+  --duration-fast: 100ms;
+  --duration-base: 150ms;
+  --duration-slow: 200ms;
+}
+
+/* ─── Dark mode ───────────────────────────────────────────── */
+[data-theme="dark"] {
+  --color-bg: oklch(0.14 0 0);
+  --color-bg-subtle: oklch(0.17 0 0);
+  --color-bg-muted: oklch(0.20 0 0);
+  --color-bg-elevated: oklch(0.18 0 0);
+
+  --color-border: oklch(0.25 0 0);
+  --color-border-strong: oklch(0.32 0 0);
+
+  --color-fg: oklch(0.95 0 0);
+  --color-fg-muted: oklch(0.70 0 0);
+  --color-fg-subtle: oklch(0.55 0 0);
+  --color-fg-disabled: oklch(0.38 0 0);
+
+  --color-accent: oklch(0.65 0.20 255);
+  --color-accent-hover: oklch(0.72 0.18 255);
+  --color-accent-bg: oklch(0.25 0.05 255);
+  --color-accent-fg: oklch(1 0 0);
+
+  --color-success: oklch(0.68 0.16 145);
+  --color-warning: oklch(0.78 0.16 75);
+  --color-danger: oklch(0.65 0.20 25);
+
+  --color-chart-1: oklch(0.95 0 0);
+  --color-chart-2: oklch(0.65 0.20 255);
+  --color-chart-3: oklch(0.65 0 0);
+  --color-chart-4: oklch(0.45 0 0);
+}
+
+/* ─── Reduced motion ──────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
   }
-}
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
 }
