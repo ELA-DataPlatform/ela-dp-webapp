@@ -4,6 +4,7 @@ import { SectionHeader } from "@/components/ui/section-header";
 import { TrainingStateCard } from "@/components/ui/training-state-card";
 import { HealthCard } from "@/components/ui/health-card";
 import { MusicListeningCard, MusicRankingCard } from "@/components/ui/music-card";
+import { DailyBriefingCard } from "@/components/ui/daily-briefing-card";
 
 // ─── Santé — 10 derniers jours (23/4 → 2/5) ───────────────────────────────
 
@@ -149,6 +150,16 @@ export default function HomePage() {
         </p>
       </header>
 
+      <DailyBriefingCard
+        className="mb-6 lg:mb-10"
+        text="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Votre récupération est excellente ce matin — HRV à 47 ms, soit +3 ms au-dessus de votre moyenne des 10 derniers jours, et un Sleep Score de 80/100. Le Body Battery au réveil (72) est légèrement en dessous de la norme, signe d'une nuit correcte après la charge de la semaine. Votre semaine s'établit à 47,2 km, dans la cible haute de votre plan Maxi-Race (J‑27). C'est une bonne journée pour une séance à intensité modérée : seuil ou tempo court, pas d'effort maximal avant la fenêtre de récupération du week-end."
+        metrics={[
+          { label: "HRV",          value: "47",  unit: "ms",     delta: "+3 ms vs moy.",  tone: "success" },
+          { label: "Sleep Score",  value: "80",  unit: "/ 100",  delta: "+3 pts vs moy.", tone: "success" },
+          { label: "Body Battery", value: "72",                  delta: "−11 vs moy.",    tone: "danger"  },
+        ]}
+      />
+
       <section>
         <SectionHeader label="Sport · Course à pied" />
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 lg:gap-4 lg:auto-rows-[280px]">
@@ -196,34 +207,6 @@ export default function HomePage() {
       </section>
 
       <section className="mt-6 lg:mt-8">
-        <SectionHeader label="Musique · Spotify" />
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 lg:gap-4 lg:auto-rows-[280px]">
-          <MusicListeningCard
-            trend={MUSIC_TREND}
-            totalTime="9h 12"
-            delta="+18% vs préc."
-            deltaTone="success"
-            footer="Temps d'écoute · 10 derniers jours · Spotify"
-          />
-          <MusicRankingCard
-            title="Top Artistes"
-            items={TOP_ARTISTS}
-            footer="10 derniers jours · Spotify"
-          />
-          <MusicRankingCard
-            title="Top Albums"
-            items={TOP_ALBUMS}
-            footer="10 derniers jours · Spotify"
-          />
-          <MusicRankingCard
-            title="Top Titres"
-            items={TOP_TRACKS}
-            footer="10 derniers jours · Spotify"
-          />
-        </div>
-      </section>
-
-      <section className="mt-6 lg:mt-8">
         <SectionHeader label="Santé · Récupération" />
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 lg:gap-4 lg:auto-rows-[280px]">
           <HealthCard
@@ -258,6 +241,34 @@ export default function HomePage() {
             trend={BATTERY_TREND}
             chartType="battery-bar"
             footer="Couché → réveil · 10 derniers jours · Garmin Connect"
+          />
+        </div>
+      </section>
+
+      <section className="mt-6 lg:mt-8">
+        <SectionHeader label="Musique · Spotify" />
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 lg:gap-4 lg:auto-rows-[280px]">
+          <MusicListeningCard
+            trend={MUSIC_TREND}
+            totalTime="9h 12"
+            delta="+18% vs préc."
+            deltaTone="success"
+            footer="Temps d'écoute · 10 derniers jours · Spotify"
+          />
+          <MusicRankingCard
+            title="Top Artistes"
+            items={TOP_ARTISTS}
+            footer="10 derniers jours · Spotify"
+          />
+          <MusicRankingCard
+            title="Top Albums"
+            items={TOP_ALBUMS}
+            footer="10 derniers jours · Spotify"
+          />
+          <MusicRankingCard
+            title="Top Titres"
+            items={TOP_TRACKS}
+            footer="10 derniers jours · Spotify"
           />
         </div>
       </section>
