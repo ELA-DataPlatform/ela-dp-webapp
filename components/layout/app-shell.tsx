@@ -32,21 +32,25 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           {NAV_ITEMS.map((item) => {
             const isActive = pathname === item.href;
             return (
-              <Link
-                key={item.href}
-                href={item.href}
-                aria-label={item.label}
-                className={cn(
-                  "flex h-9 w-9 items-center justify-center rounded-[--radius-sm]",
-                  "transition-colors duration-[--duration-base]",
-                  "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-accent)",
-                  isActive
-                    ? "bg-(--color-accent-bg) text-(--color-accent)"
-                    : "text-(--color-fg-subtle) hover:bg-(--color-bg-muted) hover:text-(--color-fg)"
+              <div key={item.href} className="flex flex-col gap-0.5">
+                {item.separator && (
+                  <hr className="my-1 border-t border-(--color-border)" />
                 )}
-              >
-                <item.icon className="h-4 w-4" strokeWidth={1.5} />
-              </Link>
+                <Link
+                  href={item.href}
+                  aria-label={item.label}
+                  className={cn(
+                    "flex h-9 w-9 items-center justify-center rounded-[--radius-sm]",
+                    "transition-colors duration-[--duration-base]",
+                    "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-accent)",
+                    isActive
+                      ? "bg-(--color-accent-bg) text-(--color-accent)"
+                      : "text-(--color-fg-subtle) hover:bg-(--color-bg-muted) hover:text-(--color-fg)"
+                  )}
+                >
+                  <item.icon className="h-4 w-4" strokeWidth={1.5} />
+                </Link>
+              </div>
             );
           })}
         </nav>
