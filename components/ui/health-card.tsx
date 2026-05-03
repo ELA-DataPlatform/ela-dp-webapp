@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import {
   AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip,
@@ -91,6 +92,9 @@ export function HealthCard({
   footer,
   className,
 }: HealthCardProps) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
   const batteryData = chartType === "battery-bar"
     ? (trend as BatteryTrendPoint[]).map((d) => ({ ...d, gain: d.wake - d.sleep }))
     : [];
@@ -157,8 +161,8 @@ export function HealthCard({
 
       {/* Chart */}
       <div className="mt-auto pt-4">
-        <div className="h-(--chart-height-bar)">
-          <ResponsiveContainer width="100%" height="100%">
+        <div style={{ height: 140 }}>
+          {mounted && <ResponsiveContainer width="100%" height={140}>
             {chartType === "battery-bar" ? (
               <BarChart data={batteryData} barCategoryGap="30%" margin={{ top: 16, right: 0, bottom: 4, left: 0 }}>
                 <YAxis hide domain={[0, 100]} />
@@ -234,7 +238,7 @@ export function HealthCard({
                 />
               </AreaChart>
             )}
-          </ResponsiveContainer>
+          </ResponsiveContainer>}
         </div>
         {footer && (
           <p className="mt-2 text-2xs text-(--color-fg-subtle)">{footer}</p>
