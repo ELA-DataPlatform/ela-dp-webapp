@@ -283,10 +283,10 @@ export default function ActivitiesPage() {
         </p>
       </div>
 
-      {/* Type filter + numeric filters — même ligne, séparés par · */}
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-(--color-border) px-6 py-3">
+      {/* Filters */}
+      <div className="flex flex-col gap-2.5 border-b border-(--color-border) px-6 py-3">
         {/* Type pills */}
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap gap-2">
           {(["all", "run", "bike", "walk"] as TypeFilter[]).map((f) => (
             <Pill
               key={f}
@@ -299,10 +299,8 @@ export default function ActivitiesPage() {
           ))}
         </div>
 
-        <span className="text-sm text-(--color-fg-subtle)" aria-hidden>·</span>
-
-        {/* Sort */}
-        <div className="flex items-center gap-2">
+        {/* Sort + numeric filters */}
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
           <span className="shrink-0 text-xs text-(--color-fg-subtle)">Trier</span>
           {SORT_OPTIONS.map(({ field, label }) => {
             const isActive = sortBy === field;
@@ -325,34 +323,29 @@ export default function ActivitiesPage() {
               </button>
             );
           })}
-        </div>
 
-        <span className="text-sm text-(--color-fg-subtle)" aria-hidden>·</span>
+          <span className="h-4 w-px shrink-0 bg-(--color-border)" aria-hidden />
 
-        {/* Distance */}
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-(--color-fg-muted)">Distance</span>
-          <NumericInput value={minDist} onChange={setMinDist} placeholder="min" />
-          <span className="text-xs text-(--color-fg-subtle)">–</span>
-          <NumericInput value={maxDist} onChange={setMaxDist} placeholder="max" />
-          <span className="font-mono text-xs text-(--color-fg-subtle)">km</span>
-        </div>
+          {/* Distance */}
+          <div className="flex items-center gap-1.5">
+            <span className="shrink-0 text-xs text-(--color-fg-muted)">Dist.</span>
+            <NumericInput value={minDist} onChange={setMinDist} placeholder="min" />
+            <span className="text-xs text-(--color-fg-subtle)">–</span>
+            <NumericInput value={maxDist} onChange={setMaxDist} placeholder="max" />
+            <span className="font-mono text-xs text-(--color-fg-subtle)">km</span>
+          </div>
 
-        <span className="text-sm text-(--color-fg-subtle)" aria-hidden>·</span>
+          {/* Durée */}
+          <div className="flex items-center gap-1.5">
+            <span className="shrink-0 text-xs text-(--color-fg-muted)">Durée</span>
+            <NumericInput value={minDur} onChange={setMinDur} placeholder="min" />
+            <span className="text-xs text-(--color-fg-subtle)">–</span>
+            <NumericInput value={maxDur} onChange={setMaxDur} placeholder="max" />
+            <span className="font-mono text-xs text-(--color-fg-subtle)">h</span>
+          </div>
 
-        {/* Durée */}
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-(--color-fg-muted)">Durée</span>
-          <NumericInput value={minDur} onChange={setMinDur} placeholder="min" />
-          <span className="text-xs text-(--color-fg-subtle)">–</span>
-          <NumericInput value={maxDur} onChange={setMaxDur} placeholder="max" />
-          <span className="font-mono text-xs text-(--color-fg-subtle)">h</span>
-        </div>
-
-        {/* Clear */}
-        {hasNumericFilter && (
-          <>
-            <span className="text-sm text-(--color-fg-subtle)" aria-hidden>·</span>
+          {/* Clear */}
+          {hasNumericFilter && (
             <button
               onClick={clearNumericFilters}
               className="inline-flex h-7 items-center gap-1.5 rounded-full border border-(--color-border) px-3 text-xs font-medium text-(--color-fg-muted) transition-colors hover:border-(--color-border-strong) hover:bg-(--color-bg-muted) hover:text-(--color-fg)"
@@ -360,8 +353,8 @@ export default function ActivitiesPage() {
               <X className="h-3 w-3" strokeWidth={2} />
               Effacer
             </button>
-          </>
-        )}
+          )}
+        </div>
       </div>
 
       {/* Activity list */}
