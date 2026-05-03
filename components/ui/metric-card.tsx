@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import {
   AreaChart, Area,
   BarChart, Bar, Cell, XAxis,
@@ -56,6 +57,9 @@ export function MetricCard({
   currentWeekStartIndex = 7,
   className,
 }: MetricCardProps) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
   const rawDelta = currentValue - previousValue;
   const isPositive = rawDelta >= 0;
 
@@ -99,8 +103,8 @@ export function MetricCard({
         </div>
       </div>
 
-      <div className="mt-4 min-h-(--chart-height) flex-1">
-        <ResponsiveContainer width="100%" height="100%">
+      <div className="mt-4" style={{ height: 100 }}>
+        {mounted && <ResponsiveContainer width="100%" height={100}>
           {chartType === "bar" ? (
             <BarChart data={data} margin={{ top: 8, right: 4, left: 4, bottom: 0 }} barCategoryGap="30%">
               <YAxis hide domain={[0, "dataMax + 2"]} />
@@ -153,7 +157,7 @@ export function MetricCard({
               />
             </AreaChart>
           )}
-        </ResponsiveContainer>
+        </ResponsiveContainer>}
       </div>
 
       {footer && (

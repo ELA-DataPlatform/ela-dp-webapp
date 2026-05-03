@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
@@ -358,6 +358,9 @@ function Heatmap({ artistId }: { artistId: string }) {
 }
 
 function WeeklyChart({ weeklyMinutes }: { weeklyMinutes: number[] }) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
   const data = useMemo(() => {
     const today = new Date();
     return weeklyMinutes.map((minutes, i) => {
@@ -369,6 +372,8 @@ function WeeklyChart({ weeklyMinutes }: { weeklyMinutes: number[] }) {
       };
     });
   }, [weeklyMinutes]);
+
+  if (!mounted) return null;
 
   return (
     <ResponsiveContainer width="100%" height="100%">

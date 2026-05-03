@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { ArrowUp, ArrowDown } from "lucide-react";
 import {
@@ -61,6 +62,9 @@ export function MusicListeningCard({
   footer,
   className,
 }: MusicListeningCardProps) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
   const avg = trend.length
     ? Math.round(trend.reduce((s, d) => s + d.value, 0) / trend.length)
     : 0;
@@ -83,8 +87,8 @@ export function MusicListeningCard({
       </div>
 
       <div className="mt-auto pt-4">
-        <div style={{ height: "var(--chart-height-bar, 140px)" }}>
-          <ResponsiveContainer width="100%" height="100%">
+        <div style={{ height: 140 }}>
+          {mounted && <ResponsiveContainer width="100%" height={140}>
             <BarChart data={trend} barCategoryGap="20%" margin={{ top: 8, right: 0, bottom: 4, left: 0 }}>
               <YAxis hide domain={[0, "dataMax + 10"]} />
               <XAxis
@@ -110,7 +114,7 @@ export function MusicListeningCard({
                 isAnimationActive={false}
               />
             </BarChart>
-          </ResponsiveContainer>
+          </ResponsiveContainer>}
         </div>
         {footer && <p className="mt-2 text-2xs text-(--color-fg-subtle)">{footer}</p>}
       </div>
