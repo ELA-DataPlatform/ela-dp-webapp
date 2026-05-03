@@ -43,6 +43,22 @@ lib/
   utils.ts             ← cn()
 ```
 
+## Workflow Git
+
+- **Branche stable** : `main` — uniquement via PR depuis `develop`
+- **Branche d'intégration** : `develop` — base de tout le travail
+- **Branches de travail** : `feature/<sujet>` ou `fix/<sujet>`, créées depuis `develop`
+
+```bash
+git checkout develop
+git checkout -b feature/ma-feature   # ou fix/mon-fix
+# ... travail ...
+git push -u origin feature/ma-feature
+# ouvrir une PR vers develop sur GitHub
+```
+
+Ne jamais pusher directement sur `main` ou `develop`.
+
 ## Commandes
 
 ```bash

@@ -3,6 +3,8 @@
 @theme inline {
   --font-sans: var(--font-geist-sans), "Inter", system-ui, -apple-system, sans-serif;
   --font-mono: var(--font-geist-mono), "JetBrains Mono", ui-monospace, monospace;
+  /* Smallest text token — 11px, not in Tailwind defaults */
+  --text-2xs: 0.6875rem;
 }
 
 /* ─── Light mode ──────────────────────────────────────────── */
@@ -40,6 +42,10 @@
   --color-chart-3: oklch(0.62 0 0);
   --color-chart-4: oklch(0.78 0 0);
 
+  /* Bordures */
+  --border-width: 1px;
+  --border-width-strong: 2px;
+
   /* Rayons */
   --radius-xs: 2px;
   --radius-sm: 4px;
@@ -47,6 +53,13 @@
   --radius-lg: 8px;
   --radius-xl: 12px;
   --radius-full: 9999px;
+
+  /* Typographie — taille minimale hors échelle Tailwind */
+  --text-2xs: 0.6875rem;
+
+  /* Dimensions composants */
+  --chart-height: 6.25rem;
+  --chart-height-bar: 8.75rem;
 
   /* Ombres — réservées aux éléments flottants */
   --shadow-sm: 0 1px 2px 0 oklch(0 0 0 / 0.05);
