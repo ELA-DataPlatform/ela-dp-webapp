@@ -259,16 +259,19 @@ export default function HomePage() {
             title="Top Artistes"
             items={TOP_ARTISTS}
             footer="10 derniers jours · Spotify"
+            viewMoreHref="#"
           />
           <MusicRankingCard
             title="Top Albums"
             items={TOP_ALBUMS}
             footer="10 derniers jours · Spotify"
+            viewMoreHref="#"
           />
           <MusicRankingCard
             title="Top Titres"
             items={TOP_TRACKS}
             footer="10 derniers jours · Spotify"
+            viewMoreHref="#"
           />
         </div>
       </section>

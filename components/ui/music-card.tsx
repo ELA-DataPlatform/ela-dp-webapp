@@ -134,8 +134,8 @@ interface RankingItem {
 function RankIndicator({ change }: { change: RankChange }) {
   if (change === "new") {
     return (
-      <span className="flex items-center text-(--color-success)">
-        <ArrowUp size={10} strokeWidth={2} />
+      <span className="font-mono text-[9px] font-medium uppercase tracking-wide text-(--color-success)">
+        NEW
       </span>
     );
   }
@@ -162,6 +162,7 @@ interface MusicRankingCardProps {
   title: string;
   items: RankingItem[];
   footer?: string;
+  viewMoreHref?: string;
   className?: string;
 }
 
@@ -169,6 +170,7 @@ export function MusicRankingCard({
   title,
   items,
   footer,
+  viewMoreHref,
   className,
 }: MusicRankingCardProps) {
   return (
@@ -217,7 +219,20 @@ export function MusicRankingCard({
         ))}
       </div>
 
-      {footer && <p className="mt-auto pt-3 text-2xs text-(--color-fg-subtle)">{footer}</p>}
+      <div className="mt-3 flex items-center justify-between pt-1">
+        {footer
+          ? <p className="text-2xs text-(--color-fg-subtle)">{footer}</p>
+          : <span />
+        }
+        {viewMoreHref && (
+          <a
+            href={viewMoreHref}
+            className="inline-flex items-center rounded-full border border-(--color-border) bg-(--color-bg-subtle) px-2 py-0.5 text-[10px] font-medium text-(--color-fg-disabled) transition-colors hover:border-(--color-border-strong) hover:text-(--color-fg-subtle) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-accent)"
+          >
+            Voir plus
+          </a>
+        )}
+      </div>
     </div>
   );
 }
@@ -230,6 +245,7 @@ interface MusicTopTrackCardProps {
   plays: number;
   totalTime: string;
   footer?: string;
+  viewMoreHref?: string;
   className?: string;
 }
 
@@ -239,6 +255,7 @@ export function MusicTopTrackCard({
   plays,
   totalTime,
   footer,
+  viewMoreHref,
   className,
 }: MusicTopTrackCardProps) {
   return (
@@ -274,7 +291,20 @@ export function MusicTopTrackCard({
         </div>
       </div>
 
-      {footer && <p className="mt-3 text-2xs text-(--color-fg-subtle)">{footer}</p>}
+      <div className="mt-3 flex items-center justify-between">
+        {footer
+          ? <p className="text-2xs text-(--color-fg-subtle)">{footer}</p>
+          : <span />
+        }
+        {viewMoreHref && (
+          <a
+            href={viewMoreHref}
+            className="inline-flex items-center rounded-full border border-(--color-border) bg-(--color-bg-subtle) px-2 py-0.5 text-[10px] font-medium text-(--color-fg-disabled) transition-colors hover:border-(--color-border-strong) hover:text-(--color-fg-subtle) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-accent)"
+          >
+            Voir plus
+          </a>
+        )}
+      </div>
     </div>
   );
 }

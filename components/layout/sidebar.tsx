@@ -33,8 +33,11 @@ export function Sidebar({ onClose }: SidebarProps) {
         {NAV_ITEMS.map((item) => {
           const isActive = pathname === item.href;
           return (
+            <div key={item.href} className="flex flex-col gap-0.5">
+              {item.separator && (
+                <hr className="my-1 border-t border-(--color-border)" />
+              )}
             <Link
-              key={item.href}
               href={item.href}
               onClick={onClose}
               className={cn(
@@ -49,6 +52,7 @@ export function Sidebar({ onClose }: SidebarProps) {
               <item.icon className="h-4 w-4 shrink-0" strokeWidth={1.5} />
               <span>{item.label}</span>
             </Link>
+            </div>
           );
         })}
       </nav>
