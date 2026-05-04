@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { MetricCard } from "@/components/ui/metric-card";
 import { ActivityCard } from "@/components/ui/activity-card";
 import { SectionHeader } from "@/components/ui/section-header";
@@ -145,7 +147,7 @@ export default function HomePage() {
         <h1 className="text-[2rem] font-semibold tracking-[-0.03em] leading-none text-(--color-fg) sm:text-[2.5rem] lg:text-[3rem]">
           Almanach
         </h1>
-        <p className="mt-2 text-2xs font-medium uppercase tracking-[0.08em] text-(--color-fg-muted)">
+        <p className="mt-2 text-2xs font-medium uppercase tracking-[0.08em] text-(--color-fg-muted)" suppressHydrationWarning>
           {today}
         </p>
       </header>
