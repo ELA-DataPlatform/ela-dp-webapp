@@ -5,7 +5,15 @@ import { NextRequest, NextResponse } from "next/server"
 
 const auth = new GoogleAuth()
 
+let cachedToken: { value: string; expiresAt: number } | null = null
+
 async function getIdToken(audience: string): Promise<string> {
+  // Reuse cached token if still valid (with 60s safety margin)
+  if (cachedToken && Date.now() < cachedToken.expiresAt - 60_000) {
+    return cachedToken.value
+  }
+
+  let token: string
   if (process.env.GOOGLE_SERVICE_ACCOUNT_KEY) {
     const keyFile = JSON.parse(
       Buffer.from(process.env.GOOGLE_SERVICE_ACCOUNT_KEY, "base64").toString("utf8")
@@ -16,15 +24,19 @@ async function getIdToken(audience: string): Promise<string> {
     const authHeader = headers instanceof Headers
       ? headers.get("Authorization")
       : (headers as Record<string, string>)["Authorization"]
-    return (authHeader ?? "").replace("Bearer ", "")
+    token = (authHeader ?? "").replace("Bearer ", "")
+  } else {
+    const client = await auth.getIdTokenClient(audience)
+    const headers = await client.getRequestHeaders()
+    const authHeader = headers instanceof Headers
+      ? headers.get("Authorization")
+      : (headers as Record<string, string>)["Authorization"]
+    token = (authHeader ?? "").replace("Bearer ", "")
   }
 
-  const client = await auth.getIdTokenClient(audience)
-  const headers = await client.getRequestHeaders()
-  const authHeader = headers instanceof Headers
-    ? headers.get("Authorization")
-    : (headers as Record<string, string>)["Authorization"]
-  return (authHeader ?? "").replace("Bearer ", "")
+  // Google ID tokens are valid for 1 hour
+  cachedToken = { value: token, expiresAt: Date.now() + 3600_000 }
+  return token
 }
 
 async function handler(
