@@ -93,7 +93,6 @@ export function MusicListeningCard({
               <YAxis hide domain={[0, "dataMax + 10"]} />
               <XAxis
                 dataKey="day"
-                tickFormatter={dayLetter}
                 axisLine={false}
                 tickLine={false}
                 tick={{ fontSize: 10, fontFamily: "var(--font-mono)", fill: "var(--color-fg-subtle)" }}

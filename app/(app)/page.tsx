@@ -1,145 +1,190 @@
-export const dynamic = "force-dynamic";
+"use client";
 
+import { useState, useEffect } from "react";
+import { apiFetch } from "@/lib/api";
 import { MetricCard } from "@/components/ui/metric-card";
 import { ActivityCard } from "@/components/ui/activity-card";
 import { SectionHeader } from "@/components/ui/section-header";
 import { TrainingStateCard } from "@/components/ui/training-state-card";
 import { HealthCard } from "@/components/ui/health-card";
 import { MusicListeningCard, MusicRankingCard } from "@/components/ui/music-card";
-import { DailyBriefingCard } from "@/components/ui/daily-briefing-card";
 
-// ─── Santé — 10 derniers jours (23/4 → 2/5) ───────────────────────────────
+// ─── API types ─────────────────────────────────────────────────────────────
 
-// Sommeil : durée en minutes · moy. 10j ≈ 426 min (7h 06) · aujourd'hui 443 (7h 23)
-const SLEEP_TREND = [
-  { day: "23/4", value: 390 },
-  { day: "24/4", value: 445 },
-  { day: "25/4", value: 362 },
-  { day: "26/4", value: 478 },
-  { day: "27/4", value: 423 },
-  { day: "28/4", value: 455 },
-  { day: "29/4", value: 390 },
-  { day: "30/4", value: 462 },
-  { day: "1/5",  value: 430 },
-  { day: "2/5",  value: 443 },
-];
+interface ApiHealthDay {
+  activity_date: string;
+  sleep_score: number | null;
+  sleep_duration_minutes: number | null;
+  hrv_morning_ms: number | null;
+  body_battery_at_sleep: number | null;
+  body_battery_at_wake: number | null;
+  day_label: string;
+  day_letter: string;
+}
 
-// HRV matinal en ms · moy. 10j ≈ 43 ms · aujourd'hui 47 ms
-const HRV_TREND = [
-  { day: "23/4", value: 38 },
-  { day: "24/4", value: 44 },
-  { day: "25/4", value: 36 },
-  { day: "26/4", value: 47 },
-  { day: "27/4", value: 43 },
-  { day: "28/4", value: 49 },
-  { day: "29/4", value: 41 },
-  { day: "30/4", value: 46 },
-  { day: "1/5",  value: 44 },
-  { day: "2/5",  value: 47 },
-];
+interface ApiHealth {
+  avg_sleep_score: number;
+  avg_sleep_duration_minutes: number;
+  avg_hrv_ms: number;
+  avg_body_battery_wake: number;
+  delta_sleep_score: number;
+  delta_sleep_minutes: number;
+  delta_hrv_ms: number;
+  delta_body_battery: number;
+  delta_sleep_score_tone: string;
+  delta_body_battery_tone: string;
+  delta_sleep_score_pct: number;
+  delta_sleep_minutes_pct: number;
+  delta_hrv_pct: number;
+  delta_body_battery_pct: number;
+  days: ApiHealthDay[];
+}
 
-// Sleep Score Garmin : /100 · moy. 10j ≈ 77 · aujourd'hui 80
-const SLEEP_SCORE_TREND = [
-  { day: "23/4", value: 72 },
-  { day: "24/4", value: 81 },
-  { day: "25/4", value: 65 },
-  { day: "26/4", value: 85 },
-  { day: "27/4", value: 76 },
-  { day: "28/4", value: 83 },
-  { day: "29/4", value: 68 },
-  { day: "30/4", value: 79 },
-  { day: "1/5",  value: 77 },
-  { day: "2/5",  value: 80 },
-];
+interface ApiLastActivity {
+  activity_id: string;
+  activity_name: string;
+  activity_date: string;
+  duration_seconds: number;
+  pace_seconds_per_km: number;
+  avg_heart_rate_bpm: number;
+  elevation_gain_m: number;
+  polyline: string;
+  activity_date_label: string;
+  days_ago: number;
+  distance_km: number;
+  duration_label: string;
+  pace_label: string;
+}
 
-// Body Battery : valeur à l'endormissement (sleep) → au réveil (wake) · 10j
-const BATTERY_TREND = [
-  { day: "23/4", sleep: 42, wake: 78 },
-  { day: "24/4", sleep: 35, wake: 85 },
-  { day: "25/4", sleep: 28, wake: 72 },
-  { day: "26/4", sleep: 45, wake: 92 },
-  { day: "27/4", sleep: 38, wake: 80 },
-  { day: "28/4", sleep: 52, wake: 91 },
-  { day: "29/4", sleep: 30, wake: 75 },
-  { day: "30/4", sleep: 44, wake: 88 },
-  { day: "1/5",  sleep: 55, wake: 94 },
-  { day: "2/5",  sleep: 48, wake: 72 },
-];
+interface ApiRankingEntity {
+  rank: number;
+  entity_name: string;
+  subtitle: string | null;
+  listening_minutes: number;
+  image_url: string;
+  rank_change: string;
+  listening_label: string;
+}
 
-// ─── Musique — 10 derniers jours (23/4 → 2/5) ────────────────────────────
+interface ApiMusicRankings {
+  period_start: string;
+  period_end: string;
+  artists: ApiRankingEntity[];
+  albums: ApiRankingEntity[];
+  tracks: ApiRankingEntity[];
+}
 
-// Temps d'écoute quotidien en minutes
-const MUSIC_TREND = [
-  { day: "23/4", value: 48 },
-  { day: "24/4", value: 72 },
-  { day: "25/4", value: 35 },
-  { day: "26/4", value: 91 },
-  { day: "27/4", value: 63 },
-  { day: "28/4", value: 55 },
-  { day: "29/4", value: 0  },
-  { day: "30/4", value: 78 },
-  { day: "1/5",  value: 44 },
-  { day: "2/5",  value: 66 },
-];
+interface ApiMusicTrendDay {
+  stream_date: string;
+  listening_minutes: number;
+  day_label: string;
+  day_letter: string;
+}
 
-const TOP_ARTISTS = [
-  { name: "Pink Floyd",                time: "2h 34",  image: "https://picsum.photos/seed/pinkfloyd/28/28",   rankChange: 2     },
-  { name: "Radiohead",                 time: "1h 47",  image: "https://picsum.photos/seed/radiohead/28/28",   rankChange: 0     },
-  { name: "Bon Iver",                  time: "1h 12",  image: "https://picsum.photos/seed/boniver/28/28",     rankChange: -1    },
-  { name: "Nick Cave & The Bad Seeds", time: "58 min", image: "https://picsum.photos/seed/nickcave/28/28",    rankChange: "new" as const },
-  { name: "The National",              time: "45 min", image: "https://picsum.photos/seed/thenational/28/28", rankChange: -2    },
-];
+interface ApiMusicTrend {
+  total_minutes_10d: number;
+  total_minutes_prev_10d: number;
+  total_label: string;
+  delta_pct: number;
+  delta_tone: string;
+  days: ApiMusicTrendDay[];
+}
 
-const TOP_ALBUMS = [
-  { name: "OK Computer",               time: "1h 02", image: "https://picsum.photos/seed/okcomputer/28/28", rankChange: 1          },
-  { name: "The Dark Side of the Moon", time: "43 min", image: "https://picsum.photos/seed/darkside/28/28",  rankChange: 0          },
-  { name: "For Emma, Forever Ago",     time: "38 min", image: "https://picsum.photos/seed/foremma/28/28",   rankChange: -1         },
-  { name: "Push the Sky Away",         time: "35 min", image: "https://picsum.photos/seed/pushsky/28/28",   rankChange: "new" as const },
-  { name: "High Violet",               time: "31 min", image: "https://picsum.photos/seed/highviolet/28/28", rankChange: 2         },
-];
+interface ApiRunningDay {
+  activity_date: string;
+  distance_km: number;
+  is_current_week: boolean;
+  day_label: string;
+  day_letter: string;
+}
 
-const TOP_TRACKS = [
-  { name: "Pyramid Song", time: "1h 08", image: "https://picsum.photos/seed/pyramidsong/28/28", rankChange: 0          },
-  { name: "Breathe",      time: "54 min", image: "https://picsum.photos/seed/breathe/28/28",    rankChange: 3          },
-  { name: "Holocene",     time: "47 min", image: "https://picsum.photos/seed/holocene/28/28",   rankChange: -1         },
-  { name: "Sorrow",       time: "41 min", image: "https://picsum.photos/seed/sorrow/28/28",     rankChange: "new" as const },
-  { name: "Into My Arms", time: "35 min", image: "https://picsum.photos/seed/intomyarms/28/28", rankChange: -2         },
-];
+interface ApiRunning {
+  current_week_km: number;
+  previous_week_km: number;
+  week_km_delta_pct: number;
+  days: ApiRunningDay[];
+}
 
-// ─── Sport — 14 derniers jours — sem. -1 (index 0-6) + sem. en cours (index 7-13)
-// 19/4/2026 = dimanche → S M T W T F S · S M T W T F S
-const DAILY_KM_DATA = [
-  { day: "19/4", letter: "S", value: 0 },
-  { day: "20/4", letter: "M", value: 8.2 },
-  { day: "21/4", letter: "T", value: 0 },
-  { day: "22/4", letter: "W", value: 12.4 },
-  { day: "23/4", letter: "T", value: 6.1 },
-  { day: "24/4", letter: "F", value: 0 },
-  { day: "25/4", letter: "S", value: 14.2 },
-  { day: "26/4", letter: "S", value: 0 },
-  { day: "27/4", letter: "M", value: 9.8 },
-  { day: "28/4", letter: "T", value: 0 },
-  { day: "29/4", letter: "W", value: 12.4 },
-  { day: "30/4", letter: "T", value: 7.5 },
-  { day: "1/5",  letter: "F", value: 0 },
-  { day: "2/5",  letter: "S", value: 17.5 },
-];
+interface ApiTrainingState {
+  snapshot_date: string;
+  training_load_7d: number;
+  training_load_target_low: number;
+  training_load_target_high: number;
+  active_goal_name: string | null;
+  active_goal_date: string | null;
+  active_goal_days_left: number | null;
+  training_state: "detraining" | "recovery" | "productive" | "maintaining" | "overreaching";
+  vo2_max: number;
+  vo2_max_status: string;
+}
 
-const LAST_ACTIVITY_STATS = [
-  { value: "12.4 km", label: "Distance" },
-  { value: "1h 03",   label: "Durée" },
-  { value: "5'02\"/km", label: "Allure moy." },
-  { value: "152 bpm", label: "FC moy." },
-  { value: "+312 m",  label: "Dénivelé +" },
-];
+interface HomepageData {
+  health: ApiHealth[];
+  last_activity: ApiLastActivity[];
+  music_rankings: ApiMusicRankings[];
+  music_trend: ApiMusicTrend[];
+  running: ApiRunning[];
+  training_state: ApiTrainingState[];
+}
+
+// ─── Helpers ───────────────────────────────────────────────────────────────
+
+function parseRankChange(s: string): number | "new" {
+  if (s === "new") return "new";
+  return parseInt(s, 10);
+}
+
+function fmtDurationMin(totalMin: number): string {
+  const h = Math.floor(totalMin / 60);
+  const m = Math.round(totalMin % 60);
+  if (h === 0) return `${m} min`;
+  return `${h}h ${m.toString().padStart(2, "0")}`;
+}
+
+function fmtDeltaSign(v: number): string {
+  return v >= 0 ? `+${v}` : `${v}`;
+}
+
+function parsePolyline(raw: string): [number, number][] {
+  try {
+    const pts = JSON.parse(raw) as [number, number][];
+    return pts.filter(([lat, lng]) => lat > 40 && lat < 60 && lng > -10 && lng < 20);
+  } catch {
+    return [];
+  }
+}
+
+// ─── Skeleton ─────────────────────────────────────────────────────────────
+
+function SkeletonCard({ className }: { className?: string }) {
+  return (
+    <div className={`rounded-[--radius-md] border border-(--color-border) bg-(--color-bg-elevated) p-5 ${className ?? ""}`}>
+      <div className="mb-3 h-2.5 w-24 animate-pulse rounded bg-(--color-bg-muted)" />
+      <div className="h-8 w-32 animate-pulse rounded bg-(--color-bg-muted)" />
+      <div className="mt-2 h-2.5 w-20 animate-pulse rounded bg-(--color-bg-muted)" />
+    </div>
+  );
+}
+
+// ─── Page ─────────────────────────────────────────────────────────────────
 
 export default function HomePage() {
+  const [data, setData] = useState<HomepageData | null>(null);
+  const [loading, setLoading] = useState(true);
+
   const today = new Date().toLocaleDateString("fr-FR", {
     weekday: "long",
     day: "numeric",
     month: "long",
     year: "numeric",
   });
+
+  useEffect(() => {
+    apiFetch("/webapp/homepage")
+      .then((r) => r.json())
+      .then(setData)
+      .finally(() => setLoading(false));
+  }, []);
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
@@ -152,59 +197,161 @@ export default function HomePage() {
         </p>
       </header>
 
-      <DailyBriefingCard
-        className="mb-6 lg:mb-10"
-        text="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Votre récupération est excellente ce matin — HRV à 47 ms, soit +3 ms au-dessus de votre moyenne des 10 derniers jours, et un Sleep Score de 80/100. Le Body Battery au réveil (72) est légèrement en dessous de la norme, signe d'une nuit correcte après la charge de la semaine. Votre semaine s'établit à 47,2 km, dans la cible haute de votre plan Maxi-Race (J‑27). C'est une bonne journée pour une séance à intensité modérée : seuil ou tempo court, pas d'effort maximal avant la fenêtre de récupération du week-end."
-        metrics={[
-          { label: "HRV",          value: "47",  unit: "ms",     delta: "+3 ms vs moy.",  tone: "success" },
-          { label: "Sleep Score",  value: "80",  unit: "/ 100",  delta: "+3 pts vs moy.", tone: "success" },
-          { label: "Body Battery", value: "72",                  delta: "−11 vs moy.",    tone: "danger"  },
-        ]}
-      />
+      {loading ? (
+        <div className="space-y-8">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 lg:gap-4">
+            <SkeletonCard />
+            <SkeletonCard className="sm:col-span-2" />
+            <SkeletonCard />
+          </div>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 lg:gap-4">
+            <SkeletonCard />
+            <SkeletonCard />
+            <SkeletonCard />
+            <SkeletonCard />
+          </div>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 lg:gap-4">
+            <SkeletonCard />
+            <SkeletonCard />
+            <SkeletonCard />
+            <SkeletonCard />
+          </div>
+        </div>
+      ) : data ? (
+        <HomepageContent data={data} />
+      ) : null}
+    </div>
+  );
+}
 
+function HomepageContent({ data }: { data: HomepageData }) {
+  // ── Running ──────────────────────────────────────────────
+  const running = data.running[0];
+  const runningDays = running.days.map((d) => ({
+    day: d.day_label,
+    letter: d.day_letter,
+    value: d.distance_km,
+  }));
+  const currentWeekStartIndex = running.days.findIndex((d) => d.is_current_week);
+
+  // ── Training state ────────────────────────────────────────
+  const ts = data.training_state[0];
+  const trainingMetrics = [
+    {
+      label: "VO2 Max",
+      value: ts.vo2_max.toFixed(0),
+      detail: ts.vo2_max_status === "declining"
+        ? "En baisse"
+        : ts.vo2_max_status === "increasing"
+        ? "En hausse"
+        : "Stable",
+    },
+    {
+      label: "Charge 7j",
+      value: ts.training_load_7d.toString(),
+      detail: `Cible ${ts.training_load_target_low}–${ts.training_load_target_high}`,
+    },
+  ];
+
+  // ── Last activity ─────────────────────────────────────────
+  const lastActivity = data.last_activity[0] ?? null;
+  const activityCoords = lastActivity ? parsePolyline(lastActivity.polyline) : [];
+  const activityStats = lastActivity
+    ? [
+        { value: `${lastActivity.distance_km.toFixed(1)} km`, label: "Distance" },
+        { value: lastActivity.duration_label, label: "Durée" },
+        { value: lastActivity.pace_label, label: "Allure moy." },
+        { value: `${lastActivity.avg_heart_rate_bpm} bpm`, label: "FC moy." },
+        { value: `+${lastActivity.elevation_gain_m} m`, label: "Dénivelé +" },
+      ]
+    : [];
+  const activityMeta = lastActivity
+    ? `il y a ${lastActivity.days_ago} jour${lastActivity.days_ago > 1 ? "s" : ""}`
+    : undefined;
+
+  // ── Health ────────────────────────────────────────────────
+  const health = data.health[0];
+  const validHealthDays = health.days.filter((d) => d.sleep_score !== null);
+  const lastHealthDay = validHealthDays[validHealthDays.length - 1];
+
+  const sleepScoreTrend = health.days
+    .filter((d) => d.sleep_score !== null)
+    .map((d) => ({ day: d.day_label, value: d.sleep_score as number }));
+
+  const sleepDurationTrend = health.days
+    .filter((d) => d.sleep_duration_minutes !== null)
+    .map((d) => ({ day: d.day_label, value: d.sleep_duration_minutes as number }));
+
+  const hrvTrend = health.days
+    .filter((d) => d.hrv_morning_ms !== null)
+    .map((d) => ({ day: d.day_label, value: d.hrv_morning_ms as number }));
+
+  const batteryTrend = health.days
+    .filter((d) => d.body_battery_at_sleep !== null && d.body_battery_at_wake !== null)
+    .map((d) => ({
+      day: d.day_label,
+      sleep: d.body_battery_at_sleep as number,
+      wake: d.body_battery_at_wake as number,
+    }));
+
+  const sleepScoreDisplay = lastHealthDay ? `${lastHealthDay.sleep_score} / 100` : "—";
+  const sleepDurationDisplay = lastHealthDay
+    ? fmtDurationMin(lastHealthDay.sleep_duration_minutes!)
+    : "—";
+  const hrvDisplay = lastHealthDay ? `${lastHealthDay.hrv_morning_ms} ms` : "—";
+  const batteryDisplay = lastHealthDay ? `${lastHealthDay.body_battery_at_wake}` : "—";
+
+  // ── Music trend ───────────────────────────────────────────
+  const musicTrend = data.music_trend[0];
+  const musicTrendDays = musicTrend.days.map((d) => ({
+    day: d.day_label,
+    value: d.listening_minutes,
+  }));
+  const musicDeltaStr = `${fmtDeltaSign(Math.round(musicTrend.delta_pct))}% vs préc.`;
+
+  // ── Music rankings ────────────────────────────────────────
+  const rankings = data.music_rankings[0];
+  const toRankItems = (entities: ApiRankingEntity[]) =>
+    entities.map((e) => ({
+      name: e.entity_name,
+      time: e.listening_label,
+      image: e.image_url,
+      rankChange: parseRankChange(e.rank_change),
+    }));
+
+  return (
+    <>
       <section>
         <SectionHeader label="Sport · Course à pied" />
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 lg:gap-4 lg:auto-rows-[280px]">
           <TrainingStateCard
-            state="productive"
-            metrics={[
-              { label: "VO2 Max",    value: "54",  detail: "Stable" },
-              { label: "Charge 7j",  value: "450", detail: "Cible 400–500" },
-            ]}
-            goal="Maxi-Race"
-            goalDaysLeft={27}
+            state={ts.training_state}
+            metrics={trainingMetrics}
+            goal={ts.active_goal_name ?? undefined}
+            goalDaysLeft={ts.active_goal_days_left ?? undefined}
           />
           <MetricCard
             className="sm:col-span-2"
             title="Kilomètres"
             subtitle="Semaine en cours"
             footer="Sem. -1 grisée · sem. courante en noir · Garmin Connect"
-            data={DAILY_KM_DATA}
+            data={runningDays}
             unit="km"
-            currentValue={47.2}
-            previousValue={40.9}
+            currentValue={running.current_week_km}
+            previousValue={running.previous_week_km}
             chartType="bar"
             deltaMode="percent"
-            currentWeekStartIndex={7}
+            currentWeekStartIndex={currentWeekStartIndex >= 0 ? currentWeekStartIndex : 7}
           />
-          <ActivityCard
-            name="Sortie longue"
-            date="28 avr. 2026"
-            meta="il y a 3 jours"
-            stats={LAST_ACTIVITY_STATS}
-            coordinates={[
-              [48.8566, 2.3522],
-              [48.8580, 2.3550],
-              [48.8601, 2.3572],
-              [48.8623, 2.3558],
-              [48.8640, 2.3530],
-              [48.8628, 2.3495],
-              [48.8607, 2.3470],
-              [48.8585, 2.3468],
-              [48.8563, 2.3490],
-              [48.8566, 2.3522],
-            ]}
-          />
+          {lastActivity && (
+            <ActivityCard
+              name={lastActivity.activity_name}
+              date={lastActivity.activity_date_label}
+              meta={activityMeta}
+              stats={activityStats}
+              coordinates={activityCoords}
+            />
+          )}
         </div>
       </section>
 
@@ -213,34 +360,35 @@ export default function HomePage() {
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 lg:gap-4 lg:auto-rows-[280px]">
           <HealthCard
             title="Sleep Score"
-            avgValue="80 / 100"
-            primaryDelta="+3 pts vs moy."
-            primaryDeltaTone="success"
-            trend={SLEEP_SCORE_TREND}
+            avgValue={sleepScoreDisplay}
+            primaryDelta={`${fmtDeltaSign(health.delta_sleep_score)} pts vs moy.`}
+            primaryDeltaTone={health.delta_sleep_score_tone as "success" | "warning" | "danger" | "neutral"}
+            trend={sleepScoreTrend}
             footer="Score de sommeil · 10 derniers jours · Garmin Connect"
           />
           <HealthCard
             title="Sommeil"
-            avgValue="7h 23"
-            primaryDelta="+16 min vs moy."
-            primaryDeltaTone="success"
-            trend={SLEEP_TREND}
+            avgValue={sleepDurationDisplay}
+            primaryDelta={`${fmtDeltaSign(health.delta_sleep_minutes)} min vs moy.`}
+            primaryDeltaTone={health.delta_sleep_minutes > 0 ? "success" : health.delta_sleep_minutes < 0 ? "danger" : "neutral"}
+            trend={sleepDurationTrend}
+            tooltipFormatter={fmtDurationMin}
             footer="Durée · 10 derniers jours · Garmin Connect"
           />
           <HealthCard
             title="Récupération"
-            avgValue="47 ms"
-            primaryDelta="+3 ms vs moy."
-            primaryDeltaTone="success"
-            trend={HRV_TREND}
+            avgValue={hrvDisplay}
+            primaryDelta={`${fmtDeltaSign(health.delta_hrv_ms)} ms vs moy.`}
+            primaryDeltaTone={health.delta_hrv_ms > 0 ? "success" : health.delta_hrv_ms < 0 ? "danger" : "neutral"}
+            trend={hrvTrend}
             footer="HRV matinal · 10 derniers jours · Garmin Connect"
           />
           <HealthCard
             title="Énergie"
-            avgValue="72"
-            primaryDelta="−11 vs moy."
-            primaryDeltaTone="danger"
-            trend={BATTERY_TREND}
+            avgValue={batteryDisplay}
+            primaryDelta={`${fmtDeltaSign(health.delta_body_battery)} vs moy.`}
+            primaryDeltaTone={health.delta_body_battery_tone as "success" | "warning" | "danger" | "neutral"}
+            trend={batteryTrend}
             chartType="battery-bar"
             footer="Couché → réveil · 10 derniers jours · Garmin Connect"
           />
@@ -251,32 +399,32 @@ export default function HomePage() {
         <SectionHeader label="Musique · Spotify" />
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 lg:gap-4 lg:auto-rows-[280px]">
           <MusicListeningCard
-            trend={MUSIC_TREND}
-            totalTime="9h 12"
-            delta="+18% vs préc."
-            deltaTone="success"
+            trend={musicTrendDays}
+            totalTime={musicTrend.total_label}
+            delta={musicDeltaStr}
+            deltaTone={musicTrend.delta_tone as "success" | "warning" | "danger" | "neutral"}
             footer="Temps d'écoute · 10 derniers jours · Spotify"
           />
           <MusicRankingCard
             title="Top Artistes"
-            items={TOP_ARTISTS}
-            footer="10 derniers jours · Spotify"
-            viewMoreHref="#"
+            items={toRankItems(rankings.artists)}
+            footer={`${rankings.period_start} → ${rankings.period_end} · Spotify`}
+            viewMoreHref="/music"
           />
           <MusicRankingCard
             title="Top Albums"
-            items={TOP_ALBUMS}
-            footer="10 derniers jours · Spotify"
-            viewMoreHref="#"
+            items={toRankItems(rankings.albums)}
+            footer={`${rankings.period_start} → ${rankings.period_end} · Spotify`}
+            viewMoreHref="/music"
           />
           <MusicRankingCard
             title="Top Titres"
-            items={TOP_TRACKS}
-            footer="10 derniers jours · Spotify"
-            viewMoreHref="#"
+            items={toRankItems(rankings.tracks)}
+            footer={`${rankings.period_start} → ${rankings.period_end} · Spotify`}
+            viewMoreHref="/music"
           />
         </div>
       </section>
-    </div>
-  )
+    </>
+  );
 }
