@@ -39,6 +39,7 @@ interface HealthCardProps {
   secondaryDeltaTone?: Tone;
   trend: AreaTrendPoint[] | BatteryTrendPoint[];
   chartType?: "area" | "battery-bar";
+  tooltipFormatter?: (v: number) => string;
   footer?: string;
   className?: string;
 }
@@ -52,11 +53,13 @@ const toneFg: Record<Tone, string> = {
 
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function SparklineTooltip({ active, payload }: any) {
+function SparklineTooltip({ active, payload, formatter }: any) {
   if (!active || !payload?.length) return null;
+  const raw = payload[0].value as number;
+  const display = formatter ? formatter(raw) : raw;
   return (
     <div className="rounded-[--radius-sm] border border-(--color-border) bg-(--color-bg-elevated) px-2 py-1">
-      <p className="font-mono text-xs tabular-nums text-(--color-fg)">{payload[0].value}</p>
+      <p className="font-mono text-xs tabular-nums text-(--color-fg)">{display}</p>
       <p className="text-2xs text-(--color-fg-subtle)">{payload[0]?.payload?.day}</p>
     </div>
   );
@@ -89,6 +92,7 @@ export function HealthCard({
   secondaryDeltaTone = "neutral",
   trend,
   chartType = "area",
+  tooltipFormatter,
   footer,
   className,
 }: HealthCardProps) {
@@ -168,7 +172,6 @@ export function HealthCard({
                 <YAxis hide domain={[0, 100]} />
                 <XAxis
                   dataKey="day"
-                  tickFormatter={dayLetter}
                   axisLine={false}
                   tickLine={false}
                   tick={{ fontSize: 10, fontFamily: "var(--font-mono)", fill: "var(--color-fg-subtle)" }}
@@ -218,7 +221,7 @@ export function HealthCard({
                   strokeDasharray="3 4"
                 />
                 <Tooltip
-                  content={<SparklineTooltip />}
+                  content={<SparklineTooltip formatter={tooltipFormatter} />}
                   cursor={{ stroke: "var(--color-border-strong)", strokeWidth: 1, strokeDasharray: "3 3" }}
                 />
                 <Area
