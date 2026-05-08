@@ -32,11 +32,14 @@ interface MetricCardProps {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function ChartTooltip({ active, payload, label, unit }: any) {
   if (!active || !payload?.length) return null;
+  const raw = payload[0].value as number;
+  if (raw === 0) return null;
   const dateLabel = payload[0]?.payload?.day ?? label;
+  const formatted = Number.isInteger(raw) ? raw : raw.toFixed(1);
   return (
     <div className="rounded-[--radius-sm] border border-(--color-border) bg-(--color-bg-elevated) px-2.5 py-1.5">
       <p className="font-mono text-xs tabular-nums text-(--color-fg)">
-        {payload[0].value}
+        {formatted}
         {unit && <span className="ml-0.5 text-(--color-fg-muted)">{unit}</span>}
       </p>
       <p className="mt-0.5 text-2xs text-(--color-fg-subtle)">{dateLabel}</p>
@@ -109,16 +112,16 @@ export function MetricCard({
             <BarChart data={data} margin={{ top: 8, right: 4, left: 4, bottom: 0 }} barCategoryGap="30%">
               <YAxis hide domain={[0, "dataMax + 2"]} />
               <XAxis
-                dataKey="letter"
+                dataKey="day"
                 interval={0}
                 tickLine={false}
                 axisLine={false}
                 height={20}
-                tick={{ fontSize: 11, fill: "var(--color-fg-subtle)", fontFamily: "var(--font-mono)" }}
+                tick={{ fontSize: 10, fill: "var(--color-fg-subtle)", fontFamily: "var(--font-mono)" }}
               />
               <Tooltip
                 content={(props) => <ChartTooltip {...props} unit={unit} />}
-                cursor={false}
+                cursor={{ fill: "var(--color-bg-muted)", radius: 2 }}
               />
               <Bar dataKey="value" radius={[2, 2, 2, 2]}>
                 {data.map((_, i) => (
