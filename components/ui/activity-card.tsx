@@ -40,12 +40,22 @@ function encodePolyline(coords: [number, number][]): string {
   return result;
 }
 
+function downsample(coords: [number, number][], max: number): [number, number][] {
+  if (coords.length <= max) return coords;
+  const step = (coords.length - 1) / (max - 1);
+  const result: [number, number][] = Array.from({ length: max - 1 }, (_, i) => coords[Math.round(i * step)]);
+  result.push(coords[coords.length - 1]);
+  return result;
+}
+
 function buildMapboxUrl(coords: [number, number][], dark: boolean): string | null {
   const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
   if (!token || coords.length < 2) return null;
 
-  const lats = coords.map(c => c[0]);
-  const lngs = coords.map(c => c[1]);
+  const coords100 = downsample(coords, 100);
+
+  const lats = coords100.map(c => c[0]);
+  const lngs = coords100.map(c => c[1]);
   const minLat = Math.min(...lats), maxLat = Math.max(...lats);
   const minLng = Math.min(...lngs), maxLng = Math.max(...lngs);
   const centerLat = (minLat + maxLat) / 2;
@@ -59,9 +69,9 @@ function buildMapboxUrl(coords: [number, number][], dark: boolean): string | nul
     Math.log2((320 / latSpan) * (170 / 512)),
   )));
 
-  const encoded = encodeURIComponent(encodePolyline(coords));
+  const encoded = encodeURIComponent(encodePolyline(coords100));
   const path = `path-3+2563eb-0.9(${encoded})`;
-  const [startLat, startLng] = coords[0];
+  const [startLat, startLng] = coords100[0];
   const startPin = `pin-s+2563eb(${startLng},${startLat})`;
 
   const mapStyle = dark ? "dark-v11" : "light-v11";
