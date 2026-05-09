@@ -59,7 +59,7 @@ function buildMapboxUrl(coords: [number, number][], dark: boolean): string | nul
   const zoom = Math.max(1, Math.floor(Math.min(
     Math.log2((720 / lngSpan) * (360 / 512)),
     Math.log2((320 / latSpan) * (170 / 512)),
-  )));
+  )) - 1);
 
   const encoded = encodeURIComponent(encodePolyline(coords100));
   const path = `path-3+2563eb-0.9(${encoded})`;
