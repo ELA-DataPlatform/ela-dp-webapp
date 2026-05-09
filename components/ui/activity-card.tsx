@@ -44,8 +44,10 @@ function buildMapboxUrl(coords: [number, number][], dark: boolean): string | nul
   const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
   if (!token || coords.length < 2) return null;
 
-  const lats = coords.map(c => c[0]);
-  const lngs = coords.map(c => c[1]);
+  const coords100 = coords.filter((_, i) => i % 10 === 0 || i === coords.length - 1);
+
+  const lats = coords100.map(c => c[0]);
+  const lngs = coords100.map(c => c[1]);
   const minLat = Math.min(...lats), maxLat = Math.max(...lats);
   const minLng = Math.min(...lngs), maxLng = Math.max(...lngs);
   const centerLat = (minLat + maxLat) / 2;
@@ -57,11 +59,11 @@ function buildMapboxUrl(coords: [number, number][], dark: boolean): string | nul
   const zoom = Math.max(1, Math.floor(Math.min(
     Math.log2((720 / lngSpan) * (360 / 512)),
     Math.log2((320 / latSpan) * (170 / 512)),
-  )));
+  )) - 1);
 
-  const encoded = encodeURIComponent(encodePolyline(coords));
+  const encoded = encodeURIComponent(encodePolyline(coords100));
   const path = `path-3+2563eb-0.9(${encoded})`;
-  const [startLat, startLng] = coords[0];
+  const [startLat, startLng] = coords100[0];
   const startPin = `pin-s+2563eb(${startLng},${startLat})`;
 
   const mapStyle = dark ? "dark-v11" : "light-v11";
