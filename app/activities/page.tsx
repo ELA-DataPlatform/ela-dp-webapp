@@ -175,7 +175,7 @@ function NumericInput({
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
-      className="h-7 w-[4.5rem] rounded-[--radius-sm] border border-(--color-border) bg-(--color-bg-elevated) px-2 font-mono text-xs tabular-nums text-(--color-fg) placeholder:text-(--color-fg-subtle) focus:border-(--color-accent) focus:outline-none transition-colors"
+      className="h-7 w-[4.5rem] rounded-(--radius-sm) border border-(--color-border) bg-(--color-bg-elevated) px-2 font-mono text-xs tabular-nums text-(--color-fg) placeholder:text-(--color-fg-subtle) focus:border-(--color-accent) focus:outline-none transition-colors"
     />
   );
 }

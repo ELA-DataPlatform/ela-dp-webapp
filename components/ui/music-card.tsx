@@ -45,7 +45,7 @@ function ListeningTooltip({ active, payload }: any) {
   const h = Math.floor(mins / 60);
   const m = mins % 60;
   return (
-    <div className="rounded-[--radius-sm] border border-(--color-border) bg-(--color-bg-elevated) px-2 py-1">
+    <div className="rounded-(--radius-sm) border border-(--color-border) bg-(--color-bg-elevated) px-2 py-1">
       <p className="font-mono text-xs tabular-nums text-(--color-fg)">
         {h > 0 ? `${h}h ${m}min` : `${m}min`}
       </p>
@@ -71,7 +71,7 @@ export function MusicListeningCard({
 
   return (
     <div className={cn(
-      "flex flex-col rounded-[--radius-md] border border-(--color-border) bg-(--color-bg-elevated) p-5",
+      "flex flex-col rounded-(--radius-md) border border-(--color-border) bg-(--color-bg-elevated) py-4 px-[18px]",
       className
     )}>
       <div className="flex items-start justify-between">
@@ -178,7 +178,7 @@ export function MusicRankingCard({
 }: MusicRankingCardProps) {
   return (
     <div className={cn(
-      "flex flex-col overflow-hidden rounded-[--radius-md] border border-(--color-border) bg-(--color-bg-elevated) p-5",
+      "flex flex-col overflow-hidden rounded-(--radius-md) border border-(--color-border) bg-(--color-bg-elevated) py-4 px-[18px]",
       className
     )}>
       <span className="shrink-0 text-2xs font-medium uppercase tracking-[0.08em] text-(--color-fg-muted)">
@@ -263,7 +263,7 @@ export function MusicTopTrackCard({
 }: MusicTopTrackCardProps) {
   return (
     <div className={cn(
-      "flex flex-col rounded-[--radius-md] border border-(--color-border) bg-(--color-bg-elevated) p-5",
+      "flex flex-col rounded-(--radius-md) border border-(--color-border) bg-(--color-bg-elevated) p-5",
       className
     )}>
       <span className="text-2xs font-medium uppercase tracking-[0.08em] text-(--color-fg-muted)">
