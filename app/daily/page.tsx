@@ -87,7 +87,14 @@ interface MetricGridDef {
   metrics: { label: string; value: number; unit: string; delta: number | null }[];
 }
 
-type ChartDef = StackedPhasesDef | FactorBreakdownDef | SparklineTrendDef | MetricGridDef;
+interface DivergingBarsDef {
+  type: "diverging_bars";
+  title: string;
+  unit: string;
+  items: { label: string; value: number; baseline: number }[];
+}
+
+type ChartDef = StackedPhasesDef | FactorBreakdownDef | SparklineTrendDef | MetricGridDef | DivergingBarsDef;
 
 interface ApiSection {
   id: string;
@@ -283,13 +290,73 @@ function MetricGridRenderer({ chart }: { chart: MetricGridDef }) {
   );
 }
 
+/* ── Chart: diverging_bars ───────────────────────────────── */
+
+function DivergingBarsRenderer({ chart }: { chart: DivergingBarsDef }) {
+  const maxDelta = Math.max(...chart.items.map((it) => Math.abs(it.value - it.baseline)));
+  const scale = maxDelta > 0 ? maxDelta : 1;
+
+  return (
+    <div className="mt-5 rounded-(--radius-lg) bg-(--color-bg-subtle) px-5 py-[18px]">
+      <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.08em] text-(--color-fg-muted)">{chart.title}</p>
+      <div className="flex flex-col gap-3">
+        {chart.items.map((it) => {
+          const delta = it.value - it.baseline;
+          const pct = Math.abs(delta) / scale * 45; // max 45% each side
+          const positive = delta >= 0;
+          const isNeutralMetric = it.label === "Léger"; // more light sleep vs baseline = neutral
+
+          let barColor = "var(--color-fg-subtle)";
+          if (!isNeutralMetric) {
+            barColor = positive ? "var(--color-success)" : "var(--color-danger)";
+          }
+
+          return (
+            <div key={it.label} className="flex items-center gap-3">
+              <span className="w-16 shrink-0 text-right text-[12px] text-(--color-fg-muted)">{it.label}</span>
+              <div className="relative flex flex-1 items-center">
+                {/* Left side (below baseline) */}
+                <div className="flex flex-1 justify-end">
+                  {!positive && (
+                    <div
+                      className="h-[6px] rounded-l-sm"
+                      style={{ width: `${pct}%`, background: barColor }}
+                    />
+                  )}
+                </div>
+                {/* Center axis */}
+                <div className="mx-px h-4 w-px shrink-0 bg-(--color-border-strong)" />
+                {/* Right side (above baseline) */}
+                <div className="flex flex-1">
+                  {positive && (
+                    <div
+                      className="h-[6px] rounded-r-sm"
+                      style={{ width: `${pct}%`, background: barColor }}
+                    />
+                  )}
+                </div>
+              </div>
+              <div className="w-28 shrink-0 font-mono text-[11px] tabular-nums text-(--color-fg-subtle)">
+                <span className="text-(--color-fg)">{it.value}</span>
+                <span className="mx-1 opacity-40">/</span>
+                {it.baseline} {chart.unit}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 /* ── Chart dispatcher ────────────────────────────────────── */
 
 function ChartRenderer({ chart }: { chart: ChartDef }) {
-  if (chart.type === "stacked_phases")  return <StackedPhasesRenderer chart={chart} />;
+  if (chart.type === "stacked_phases")   return <StackedPhasesRenderer chart={chart} />;
   if (chart.type === "factor_breakdown") return <FactorBreakdownRenderer chart={chart} />;
-  if (chart.type === "sparkline_trend") return <SparklineTrendRenderer chart={chart} />;
-  if (chart.type === "metric_grid")     return <MetricGridRenderer chart={chart} />;
+  if (chart.type === "sparkline_trend")  return <SparklineTrendRenderer chart={chart} />;
+  if (chart.type === "metric_grid")      return <MetricGridRenderer chart={chart} />;
+  if (chart.type === "diverging_bars")   return <DivergingBarsRenderer chart={chart} />;
   return null;
 }
 
@@ -479,8 +546,14 @@ export default function DailyPage() {
 
     apiFetch(path)
       .then((res) => res.json())
-      .then((data: unknown) => {
-        const isEmpty = !data || typeof data !== "object" || Object.keys(data).length === 0;
+      .then((envelope: unknown) => {
+        // API wraps the payload: { "output": "<JSON string>" }
+        let data: unknown = envelope;
+        if (envelope && typeof envelope === "object" && "output" in envelope) {
+          const raw = (envelope as { output: unknown }).output;
+          data = typeof raw === "string" ? JSON.parse(raw) : raw;
+        }
+        const isEmpty = !data || typeof data !== "object" || Object.keys(data as object).length === 0;
         setBriefing(isEmpty ? null : (data as ApiResponse));
       })
       .catch(() => setBriefing(null))
