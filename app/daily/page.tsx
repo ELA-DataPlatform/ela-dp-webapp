@@ -564,10 +564,10 @@ export default function DailyPage() {
   const fmt = formatDisplay(selectedDate);
 
   return (
-    <div className="flex flex-1 flex-col overflow-x-hidden">
+    <div className="flex flex-1 flex-col">
       <DateCarousel selected={selectedDate} today={today} onChange={setSelectedDate} />
 
-      <div className="flex-1 overflow-x-hidden overflow-y-auto">
+      <div className="flex-1 overflow-y-auto">
         {loading ? (
           <LoadingSkeleton />
         ) : briefing ? (
