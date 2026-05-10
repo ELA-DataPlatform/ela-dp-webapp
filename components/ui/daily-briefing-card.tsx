@@ -25,7 +25,7 @@ export function DailyBriefingCard({ text, metrics, className }: DailyBriefingCar
   return (
     <div
       className={cn(
-        "flex flex-col gap-5 rounded-[--radius-md] border border-(--color-border) bg-(--color-bg-elevated) p-5 lg:flex-row lg:gap-6",
+        "flex flex-col gap-5 rounded-(--radius-md) border border-(--color-border) bg-(--color-bg-elevated) p-5 lg:flex-row lg:gap-6",
         className
       )}
     >
@@ -35,7 +35,7 @@ export function DailyBriefingCard({ text, metrics, className }: DailyBriefingCar
           <span className="text-2xs font-medium uppercase tracking-[0.08em] text-(--color-fg-muted)">
             Briefing du jour
           </span>
-          <span className="inline-flex items-center rounded-[--radius-xs] border border-(--color-border) bg-(--color-bg-muted) px-1.5 py-0.5 font-mono text-2xs font-medium text-(--color-fg-subtle)">
+          <span className="inline-flex items-center rounded-(--radius-xs) border border-(--color-border) bg-(--color-bg-muted) px-1.5 py-0.5 font-mono text-2xs font-medium text-(--color-fg-subtle)">
             IA
           </span>
         </div>

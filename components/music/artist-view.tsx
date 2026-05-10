@@ -395,7 +395,7 @@ function WeeklyChart({ weeklyMinutes }: { weeklyMinutes: number[] }) {
             if (!active || !payload?.length) return null;
             const v = payload[0]?.value as number;
             return (
-              <div className="rounded-[--radius-sm] border border-(--color-border) bg-(--color-bg-elevated) px-3 py-2"
+              <div className="rounded-(--radius-sm) border border-(--color-border) bg-(--color-bg-elevated) px-3 py-2"
                 style={{ boxShadow: "var(--shadow-md)" }}>
                 <p className="mb-0.5 text-xs text-(--color-fg-muted)">{label}</p>
                 <p className="font-mono text-xs font-medium tabular-nums text-(--color-fg)">
@@ -415,9 +415,9 @@ function HeroCard({ artist }: { artist: ArtistData }) {
   const initials = artist.name.split(/\s+/).slice(0, 2).map(w => w[0]).join("").toUpperCase();
 
   return (
-    <div className="rounded-[--radius-md] border border-(--color-border) bg-(--color-bg-elevated) p-5">
+    <div className="rounded-(--radius-md) border border-(--color-border) bg-(--color-bg-elevated) p-5">
       <div className="flex items-start gap-4">
-        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[--radius-md] bg-(--color-bg-muted) text-xl font-semibold text-(--color-fg)">
+        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-(--radius-md) bg-(--color-bg-muted) text-xl font-semibold text-(--color-fg)">
           {initials}
         </div>
         <div className="min-w-0 flex-1">
@@ -463,7 +463,7 @@ function TopRanking({
   entries: { name: string; sub?: string; time: string; plays: number }[];
 }) {
   return (
-    <div className="overflow-hidden rounded-[--radius-md] border border-(--color-border) bg-(--color-bg-elevated)">
+    <div className="overflow-hidden rounded-(--radius-md) border border-(--color-border) bg-(--color-bg-elevated)">
       <div className="flex items-center justify-between border-b border-(--color-border) bg-(--color-bg-subtle) px-4 py-2.5">
         <span className="text-2xs font-medium uppercase tracking-[0.08em] text-(--color-fg-muted)">{title}</span>
         {entries.length > 0 && (
@@ -506,7 +506,7 @@ function AlbumCompletion({ albums }: { albums: AlbumData[] }) {
   if (!albums.length) return null;
 
   return (
-    <div className="overflow-hidden rounded-[--radius-md] border border-(--color-border) bg-(--color-bg-elevated)">
+    <div className="overflow-hidden rounded-(--radius-md) border border-(--color-border) bg-(--color-bg-elevated)">
       {/* Section header */}
       <div className="border-b border-(--color-border) bg-(--color-bg-subtle) px-4 py-2.5">
         <span className="text-2xs font-medium uppercase tracking-[0.08em] text-(--color-fg-muted)">
@@ -603,7 +603,7 @@ export function ArtistView({ artistId }: { artistId: string }) {
           <Link
             href="/music"
             aria-label="Retour aux classements"
-            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[--radius-sm] text-(--color-fg-subtle) transition-colors hover:bg-(--color-bg-muted) hover:text-(--color-fg) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-accent)"
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-(--radius-sm) text-(--color-fg-subtle) transition-colors hover:bg-(--color-bg-muted) hover:text-(--color-fg) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-accent)"
           >
             <ArrowLeft size={14} strokeWidth={1.5} />
           </Link>
@@ -647,7 +647,7 @@ export function ArtistView({ artistId }: { artistId: string }) {
 
         {/* Charts row */}
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-          <div className="rounded-[--radius-md] border border-(--color-border) bg-(--color-bg-elevated) p-4">
+          <div className="rounded-(--radius-md) border border-(--color-border) bg-(--color-bg-elevated) p-4">
             <div className="mb-3 flex items-center justify-between">
               <span className="text-[9px] font-medium uppercase tracking-[0.08em] text-(--color-fg-muted)">
                 Rythme d'écoute hebdomadaire
@@ -659,7 +659,7 @@ export function ArtistView({ artistId }: { artistId: string }) {
             </div>
           </div>
 
-          <div className="rounded-[--radius-md] border border-(--color-border) bg-(--color-bg-elevated) p-4">
+          <div className="rounded-(--radius-md) border border-(--color-border) bg-(--color-bg-elevated) p-4">
             <div className="mb-3">
               <span className="text-[9px] font-medium uppercase tracking-[0.08em] text-(--color-fg-muted)">
                 Activité sur 365 jours

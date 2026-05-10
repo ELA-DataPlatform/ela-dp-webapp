@@ -38,7 +38,7 @@ interface HealthCardProps {
   secondaryDelta?: string;
   secondaryDeltaTone?: Tone;
   trend: AreaTrendPoint[] | BatteryTrendPoint[];
-  chartType?: "area" | "battery-bar";
+  chartType?: "area" | "bar" | "battery-bar";
   tooltipFormatter?: (v: number) => string;
   footer?: string;
   className?: string;
@@ -58,7 +58,7 @@ function SparklineTooltip({ active, payload, formatter }: any) {
   const raw = payload[0].value as number;
   const display = formatter ? formatter(raw) : raw;
   return (
-    <div className="rounded-[--radius-sm] border border-(--color-border) bg-(--color-bg-elevated) px-2 py-1">
+    <div className="rounded-(--radius-sm) border border-(--color-border) bg-(--color-bg-elevated) px-2 py-1">
       <p className="font-mono text-xs tabular-nums text-(--color-fg)">{display}</p>
       <p className="text-2xs text-(--color-fg-subtle)">{payload[0]?.payload?.day}</p>
     </div>
@@ -70,7 +70,7 @@ function BatteryTooltip({ active, payload }: any) {
   if (!active || !payload?.length) return null;
   const d = payload[0]?.payload as BatteryTrendPoint & { gain: number };
   return (
-    <div className="rounded-[--radius-sm] border border-(--color-border) bg-(--color-bg-elevated) px-2.5 py-1.5">
+    <div className="rounded-(--radius-sm) border border-(--color-border) bg-(--color-bg-elevated) px-2.5 py-1.5">
       <p className="font-mono text-xs tabular-nums text-(--color-fg)">
         {d.sleep} → {d.wake}
       </p>
@@ -112,7 +112,7 @@ export function HealthCard({
 
   return (
     <div className={cn(
-      "flex flex-col rounded-[--radius-md] border border-(--color-border) bg-(--color-bg-elevated) p-5",
+      "flex flex-col rounded-(--radius-md) border border-(--color-border) bg-(--color-bg-elevated) py-4 px-[18px]",
       className
     )}>
       {/* Header */}
@@ -206,6 +206,50 @@ export function HealthCard({
                         }}
                       >
                         {value}
+                      </text>
+                    )}
+                  />
+                </Bar>
+              </BarChart>
+            ) : chartType === "bar" ? (
+              <BarChart data={trend as AreaTrendPoint[]} barCategoryGap="28%" margin={{ top: 8, right: 0, bottom: 4, left: 0 }}>
+                <YAxis hide domain={["dataMin - 2", "dataMax + 2"]} />
+                <XAxis
+                  dataKey="day"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fontSize: 10, fontFamily: "var(--font-mono)", fill: "var(--color-fg-subtle)" }}
+                  interval={0}
+                  height={18}
+                />
+                <ReferenceLine
+                  y={avgArea}
+                  stroke="var(--color-border-strong)"
+                  strokeWidth={1}
+                  strokeDasharray="3 4"
+                />
+                <Tooltip
+                  content={<SparklineTooltip formatter={tooltipFormatter} />}
+                  cursor={false}
+                />
+                <Bar dataKey="value" fill="var(--color-chart-1)" radius={[2, 2, 2, 2]} isAnimationActive={false}>
+                  <LabelList
+                    dataKey="value"
+                    position="top"
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    content={({ x, y, width, value }: any) => (
+                      <text
+                        x={Number(x) + Number(width) / 2}
+                        y={Number(y) - 3}
+                        textAnchor="middle"
+                        style={{
+                          fill: "var(--color-fg-subtle)",
+                          fontSize: "9px",
+                          fontFamily: "var(--font-mono)",
+                          fontVariantNumeric: "tabular-nums",
+                        }}
+                      >
+                        {tooltipFormatter ? tooltipFormatter(value) : value}
                       </text>
                     )}
                   />

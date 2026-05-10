@@ -164,7 +164,7 @@ function RankingCard({
   const SKELETON_COUNT = 10;
 
   return (
-    <div className="overflow-hidden rounded-[--radius-md] border border-(--color-border) bg-(--color-bg-elevated)">
+    <div className="overflow-hidden rounded-(--radius-md) border border-(--color-border) bg-(--color-bg-elevated)">
       <div className="flex items-center justify-between border-b border-(--color-border) bg-(--color-bg-subtle) px-4 py-2.5">
         <span className="text-2xs font-medium uppercase tracking-[0.08em] text-(--color-fg-muted)">
           {title}

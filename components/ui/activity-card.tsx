@@ -62,9 +62,10 @@ function buildMapboxUrl(coords: [number, number][], dark: boolean): string | nul
   )) - 1);
 
   const encoded = encodeURIComponent(encodePolyline(coords100));
-  const path = `path-3+2563eb-0.9(${encoded})`;
+  const routeColor = dark ? "fafafa" : "232323";
+  const path = `path-3+${routeColor}-0.9(${encoded})`;
   const [startLat, startLng] = coords100[0];
-  const startPin = `pin-s+2563eb(${startLng},${startLat})`;
+  const startPin = `pin-s+${routeColor}(${startLng},${startLat})`;
 
   const mapStyle = dark ? "dark-v11" : "light-v11";
   // bearing=0 (nord en haut), pitch=0 (vue strictement zénithale)
@@ -106,51 +107,51 @@ function RouteMap({ coordinates }: { coordinates?: [number, number][] }) {
         className="absolute inset-0 h-full w-full"
         aria-hidden="true"
       >
-        <rect x="0" y="0" width="400" height="200" fill="oklch(0.965 0 0)" />
-        <line x1="0" y1="100" x2="400" y2="100" stroke="oklch(0.88 0 0)" strokeWidth="6" />
-        <line x1="200" y1="0" x2="200" y2="200" stroke="oklch(0.88 0 0)" strokeWidth="5" />
-        <line x1="0" y1="55" x2="400" y2="55" stroke="oklch(0.91 0 0)" strokeWidth="3" />
-        <line x1="0" y1="145" x2="400" y2="145" stroke="oklch(0.91 0 0)" strokeWidth="3" />
-        <line x1="0" y1="28" x2="400" y2="28" stroke="oklch(0.93 0 0)" strokeWidth="2" />
-        <line x1="0" y1="172" x2="400" y2="172" stroke="oklch(0.93 0 0)" strokeWidth="2" />
-        <line x1="100" y1="0" x2="100" y2="200" stroke="oklch(0.91 0 0)" strokeWidth="3" />
-        <line x1="300" y1="0" x2="300" y2="200" stroke="oklch(0.91 0 0)" strokeWidth="3" />
-        <line x1="50" y1="0" x2="50" y2="200" stroke="oklch(0.93 0 0)" strokeWidth="2" />
-        <line x1="150" y1="0" x2="150" y2="200" stroke="oklch(0.93 0 0)" strokeWidth="2" />
-        <line x1="250" y1="0" x2="250" y2="200" stroke="oklch(0.93 0 0)" strokeWidth="2" />
-        <line x1="350" y1="0" x2="350" y2="200" stroke="oklch(0.93 0 0)" strokeWidth="2" />
-        <line x1="0" y1="160" x2="280" y2="40" stroke="oklch(0.89 0 0)" strokeWidth="4" />
-        <line x1="160" y1="0" x2="400" y2="130" stroke="oklch(0.91 0 0)" strokeWidth="3" />
-        <rect x="10" y="34" width="35" height="18" rx="1" fill="oklch(0.94 0 0)" />
-        <rect x="10" y="60" width="28" height="36" rx="1" fill="oklch(0.94 0 0)" />
-        <rect x="55" y="34" width="40" height="18" rx="1" fill="oklch(0.94 0 0)" />
-        <rect x="55" y="60" width="40" height="36" rx="1" fill="oklch(0.94 0 0)" />
-        <rect x="10" y="106" width="35" height="35" rx="1" fill="oklch(0.94 0 0)" />
-        <rect x="55" y="106" width="40" height="35" rx="1" fill="oklch(0.94 0 0)" />
-        <rect x="10" y="150" width="35" height="18" rx="1" fill="oklch(0.94 0 0)" />
-        <rect x="55" y="150" width="40" height="18" rx="1" fill="oklch(0.94 0 0)" />
-        <rect x="105" y="34" width="40" height="18" rx="1" fill="oklch(0.94 0 0)" />
-        <rect x="105" y="60" width="40" height="36" rx="1" fill="oklch(0.94 0 0)" />
-        <rect x="155" y="60" width="40" height="36" rx="1" fill="oklch(0.94 0 0)" />
-        <rect x="105" y="106" width="40" height="35" rx="1" fill="oklch(0.94 0 0)" />
-        <rect x="155" y="106" width="40" height="35" rx="1" fill="oklch(0.94 0 0)" />
-        <rect x="105" y="150" width="40" height="18" rx="1" fill="oklch(0.94 0 0)" />
-        <rect x="205" y="34" width="40" height="18" rx="1" fill="oklch(0.94 0 0)" />
-        <rect x="205" y="60" width="40" height="36" rx="1" fill="oklch(0.94 0 0)" />
-        <rect x="255" y="34" width="40" height="18" rx="1" fill="oklch(0.94 0 0)" />
-        <rect x="255" y="60" width="40" height="36" rx="1" fill="oklch(0.94 0 0)" />
-        <rect x="205" y="106" width="40" height="35" rx="1" fill="oklch(0.94 0 0)" />
-        <rect x="255" y="106" width="40" height="35" rx="1" fill="oklch(0.94 0 0)" />
-        <rect x="205" y="150" width="40" height="18" rx="1" fill="oklch(0.94 0 0)" />
-        <rect x="255" y="150" width="40" height="18" rx="1" fill="oklch(0.94 0 0)" />
-        <rect x="305" y="34" width="40" height="18" rx="1" fill="oklch(0.94 0 0)" />
-        <rect x="305" y="60" width="40" height="36" rx="1" fill="oklch(0.94 0 0)" />
-        <rect x="355" y="60" width="35" height="36" rx="1" fill="oklch(0.94 0 0)" />
-        <rect x="305" y="106" width="40" height="35" rx="1" fill="oklch(0.94 0 0)" />
-        <rect x="355" y="106" width="35" height="35" rx="1" fill="oklch(0.94 0 0)" />
-        <rect x="305" y="150" width="40" height="18" rx="1" fill="oklch(0.94 0 0)" />
-        <rect x="355" y="150" width="35" height="18" rx="1" fill="oklch(0.94 0 0)" />
-        <rect x="155" y="34" width="40" height="18" rx="2" fill="oklch(0.91 0.02 145)" opacity="0.5" />
+        <rect x="0" y="0" width="400" height="200" fill="var(--color-bg-subtle)" />
+        <line x1="0" y1="100" x2="400" y2="100" stroke="var(--color-border-strong)" strokeWidth="6" />
+        <line x1="200" y1="0" x2="200" y2="200" stroke="var(--color-border-strong)" strokeWidth="5" />
+        <line x1="0" y1="55" x2="400" y2="55" stroke="var(--color-border)" strokeWidth="3" />
+        <line x1="0" y1="145" x2="400" y2="145" stroke="var(--color-border)" strokeWidth="3" />
+        <line x1="0" y1="28" x2="400" y2="28" stroke="var(--color-border)" strokeWidth="2" />
+        <line x1="0" y1="172" x2="400" y2="172" stroke="var(--color-border)" strokeWidth="2" />
+        <line x1="100" y1="0" x2="100" y2="200" stroke="var(--color-border)" strokeWidth="3" />
+        <line x1="300" y1="0" x2="300" y2="200" stroke="var(--color-border)" strokeWidth="3" />
+        <line x1="50" y1="0" x2="50" y2="200" stroke="var(--color-border)" strokeWidth="2" />
+        <line x1="150" y1="0" x2="150" y2="200" stroke="var(--color-border)" strokeWidth="2" />
+        <line x1="250" y1="0" x2="250" y2="200" stroke="var(--color-border)" strokeWidth="2" />
+        <line x1="350" y1="0" x2="350" y2="200" stroke="var(--color-border)" strokeWidth="2" />
+        <line x1="0" y1="160" x2="280" y2="40" stroke="var(--color-border-strong)" strokeWidth="4" />
+        <line x1="160" y1="0" x2="400" y2="130" stroke="var(--color-border)" strokeWidth="3" />
+        <rect x="10" y="34" width="35" height="18" rx="1" fill="var(--color-bg-muted)" />
+        <rect x="10" y="60" width="28" height="36" rx="1" fill="var(--color-bg-muted)" />
+        <rect x="55" y="34" width="40" height="18" rx="1" fill="var(--color-bg-muted)" />
+        <rect x="55" y="60" width="40" height="36" rx="1" fill="var(--color-bg-muted)" />
+        <rect x="10" y="106" width="35" height="35" rx="1" fill="var(--color-bg-muted)" />
+        <rect x="55" y="106" width="40" height="35" rx="1" fill="var(--color-bg-muted)" />
+        <rect x="10" y="150" width="35" height="18" rx="1" fill="var(--color-bg-muted)" />
+        <rect x="55" y="150" width="40" height="18" rx="1" fill="var(--color-bg-muted)" />
+        <rect x="105" y="34" width="40" height="18" rx="1" fill="var(--color-bg-muted)" />
+        <rect x="105" y="60" width="40" height="36" rx="1" fill="var(--color-bg-muted)" />
+        <rect x="155" y="60" width="40" height="36" rx="1" fill="var(--color-bg-muted)" />
+        <rect x="105" y="106" width="40" height="35" rx="1" fill="var(--color-bg-muted)" />
+        <rect x="155" y="106" width="40" height="35" rx="1" fill="var(--color-bg-muted)" />
+        <rect x="105" y="150" width="40" height="18" rx="1" fill="var(--color-bg-muted)" />
+        <rect x="205" y="34" width="40" height="18" rx="1" fill="var(--color-bg-muted)" />
+        <rect x="205" y="60" width="40" height="36" rx="1" fill="var(--color-bg-muted)" />
+        <rect x="255" y="34" width="40" height="18" rx="1" fill="var(--color-bg-muted)" />
+        <rect x="255" y="60" width="40" height="36" rx="1" fill="var(--color-bg-muted)" />
+        <rect x="205" y="106" width="40" height="35" rx="1" fill="var(--color-bg-muted)" />
+        <rect x="255" y="106" width="40" height="35" rx="1" fill="var(--color-bg-muted)" />
+        <rect x="205" y="150" width="40" height="18" rx="1" fill="var(--color-bg-muted)" />
+        <rect x="255" y="150" width="40" height="18" rx="1" fill="var(--color-bg-muted)" />
+        <rect x="305" y="34" width="40" height="18" rx="1" fill="var(--color-bg-muted)" />
+        <rect x="305" y="60" width="40" height="36" rx="1" fill="var(--color-bg-muted)" />
+        <rect x="355" y="60" width="35" height="36" rx="1" fill="var(--color-bg-muted)" />
+        <rect x="305" y="106" width="40" height="35" rx="1" fill="var(--color-bg-muted)" />
+        <rect x="355" y="106" width="35" height="35" rx="1" fill="var(--color-bg-muted)" />
+        <rect x="305" y="150" width="40" height="18" rx="1" fill="var(--color-bg-muted)" />
+        <rect x="355" y="150" width="35" height="18" rx="1" fill="var(--color-bg-muted)" />
+        <rect x="155" y="34" width="40" height="18" rx="2" fill="var(--color-fg-subtle)" opacity="0.3" />
       </svg>
       <svg
         viewBox="0 0 400 200"
@@ -175,8 +176,8 @@ function RouteMap({ coordinates }: { coordinates?: [number, number][] }) {
 
 export function ActivityCard({ name, date, meta, stats, coordinates }: ActivityCardProps) {
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-[--radius-md] border border-(--color-border) bg-(--color-bg-elevated)">
-      <div className="shrink-0 px-4 pt-4 pb-3 border-b border-(--color-border)">
+    <div className="flex h-full flex-col overflow-hidden rounded-(--radius-md) border border-(--color-border) bg-(--color-bg-elevated)">
+      <div className="shrink-0 px-[18px] pt-4 pb-3 border-b border-(--color-border)">
         <span className="text-2xs font-medium uppercase tracking-[0.08em] text-(--color-fg-muted)">
           Dernière activité
         </span>
@@ -195,7 +196,7 @@ export function ActivityCard({ name, date, meta, stats, coordinates }: ActivityC
           {stats.slice(0, 4).map((stat) => (
             <div
               key={stat.label}
-              className="flex flex-col justify-center px-4 py-2"
+              className="flex flex-col justify-center px-[18px] py-2"
             >
               <p className="font-mono text-sm font-medium tabular-nums text-(--color-fg)">
                 {stat.value}

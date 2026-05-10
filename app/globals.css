@@ -75,32 +75,51 @@
 
 /* ─── Dark mode ───────────────────────────────────────────── */
 [data-theme="dark"] {
-  --color-bg: oklch(0.14 0 0);
-  --color-bg-subtle: oklch(0.17 0 0);
-  --color-bg-muted: oklch(0.20 0 0);
-  --color-bg-elevated: oklch(0.18 0 0);
+  /* Backgrounds */
+  --color-bg: #0a0a0a;
+  --color-bg-subtle: #0f0f0f;                     /* sidebar — opaque, légèrement plus clair que bg */
+  --color-bg-muted: rgba(255, 255, 255, 0.04);    /* hover = surface-2 */
+  --color-bg-elevated: rgba(255, 255, 255, 0.02); /* cards = surface translucide */
 
-  --color-border: oklch(0.25 0 0);
-  --color-border-strong: oklch(0.32 0 0);
+  /* Borders */
+  --color-border: rgba(255, 255, 255, 0.06);
+  --color-border-strong: rgba(255, 255, 255, 0.12);
 
-  --color-fg: oklch(0.95 0 0);
-  --color-fg-muted: oklch(0.70 0 0);
-  --color-fg-subtle: oklch(0.55 0 0);
-  --color-fg-disabled: oklch(0.38 0 0);
+  /* Text — 3 niveaux uniquement */
+  --color-fg: #fafafa;
+  --color-fg-muted: #888888;
+  --color-fg-subtle: #555555;
+  --color-fg-disabled: #3d3d3d;
 
-  --color-accent: oklch(0.65 0.20 255);
-  --color-accent-hover: oklch(0.72 0.18 255);
-  --color-accent-bg: oklch(0.25 0.05 255);
-  --color-accent-fg: oklch(1 0 0);
+  /* Accent neutralisé — réintroduit plus tard */
+  --color-accent: #fafafa;
+  --color-accent-hover: #fafafa;
+  --color-accent-bg: rgba(255, 255, 255, 0.04);
+  --color-accent-fg: #0a0a0a;
 
-  --color-success: oklch(0.68 0.16 145);
-  --color-warning: oklch(0.78 0.16 75);
-  --color-danger: oklch(0.65 0.20 25);
+  /* Sémantique */
+  --color-success: #7ec96d;
+  --color-warning: #888888;  /* neutralisé */
+  --color-danger: #c47878;
 
-  --color-chart-1: oklch(0.95 0 0);
-  --color-chart-2: oklch(0.65 0.20 255);
-  --color-chart-3: oklch(0.65 0 0);
-  --color-chart-4: oklch(0.45 0 0);
+  /* Data viz */
+  --color-chart-1: #fafafa;
+  --color-chart-2: #7ec96d;
+  --color-chart-3: #555555;
+  --color-chart-4: rgba(255, 255, 255, 0.18);  /* barres sem. précédente */
+
+  /* Arrondi cards — 8px en dark */
+  --radius-md: 8px;
+}
+
+/* Bordures hairline (0.5px) en dark mode */
+[data-theme="dark"] .border {
+  border-width: 0.5px;
+}
+
+/* tabular-nums via font-feature-settings sur tout texte mono */
+[data-theme="dark"] .font-mono {
+  font-feature-settings: "tnum" 1, "zero" 1;
 }
 
 /* ─── Reduced motion ──────────────────────────────────────── */

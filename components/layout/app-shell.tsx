@@ -21,7 +21,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <button
             onClick={() => setOpen(true)}
             aria-label="Ouvrir le menu"
-            className="flex h-9 w-9 items-center justify-center rounded-[--radius-sm] text-(--color-fg-subtle) hover:bg-(--color-bg-muted) hover:text-(--color-fg) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-accent)"
+            className="flex h-9 w-9 items-center justify-center rounded-(--radius-sm) text-(--color-fg-subtle) hover:bg-(--color-bg-muted) hover:text-(--color-fg) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-accent)"
           >
             <Menu className="h-4 w-4" strokeWidth={1.5} />
           </button>
@@ -40,7 +40,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   href={item.href}
                   aria-label={item.label}
                   className={cn(
-                    "flex h-9 w-9 items-center justify-center rounded-[--radius-sm]",
+                    "flex h-9 w-9 items-center justify-center rounded-(--radius-sm)",
                     "transition-colors duration-[--duration-base]",
                     "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-accent)",
                     isActive
