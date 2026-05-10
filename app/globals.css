@@ -1,5 +1,10 @@
 @import "tailwindcss";
 
+@utility scrollbar-none {
+  scrollbar-width: none;
+  &::-webkit-scrollbar { display: none; }
+}
+
 @theme inline {
   --font-sans: var(--font-geist-sans), "Inter", system-ui, -apple-system, sans-serif;
   --font-mono: var(--font-geist-mono), "JetBrains Mono", ui-monospace, monospace;
@@ -9,6 +14,7 @@
 
 /* ─── Light mode ──────────────────────────────────────────── */
 :root {
+  --font-serif: Georgia, 'Times New Roman', serif;
   /* Backgrounds */
   --color-bg: oklch(0.99 0 0);
   --color-bg-subtle: oklch(0.975 0 0);

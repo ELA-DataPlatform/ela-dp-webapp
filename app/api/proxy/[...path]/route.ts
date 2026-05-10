@@ -53,8 +53,9 @@ async function handler(
     return NextResponse.json({ error: "NEXT_PUBLIC_API_URL non configurée" }, { status: 500 })
   }
 
-  const { path } = await params
-  const upstreamUrl = `${audience}/${path.join("/")}${req.nextUrl.search}`
+  await params // resolve params (unused: path derived from req.nextUrl)
+  const apiPath = req.nextUrl.pathname.replace(/^\/api\/proxy/, "")
+  const upstreamUrl = `${audience}${apiPath}${req.nextUrl.search}`
 
   let token: string
   try {
@@ -64,14 +65,27 @@ async function handler(
     return NextResponse.json({ error: "Impossible d'obtenir un identity token" }, { status: 500 })
   }
 
-  const upstream = await fetch(upstreamUrl, {
+  const authHeaders = {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token}`,
+  }
+  const body = req.method !== "GET" && req.method !== "HEAD" ? req.body : undefined
+
+  let upstream = await fetch(upstreamUrl, {
     method: req.method,
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: req.method !== "GET" && req.method !== "HEAD" ? req.body : undefined,
+    headers: authHeaders,
+    body,
+    redirect: "manual",
   })
+
+  // Preserve Authorization through 3xx (Node.js fetch drops it on redirect)
+  if (upstream.status >= 300 && upstream.status < 400) {
+    const location = upstream.headers.get("location")
+    if (location) {
+      const absoluteLocation = (location.startsWith("http") ? location : `${audience}${location}`).replace(/^http:\/\//, "https://")
+      upstream = await fetch(absoluteLocation, { method: req.method, headers: authHeaders, body })
+    }
+  }
 
   const data = await upstream.text()
   return new NextResponse(data, {
