@@ -425,7 +425,7 @@ function DateCarousel({ selected, today, onChange }: { selected: string; today: 
   }, [selected]);
 
   return (
-    <div className="flex items-center gap-2 border-b border-(--color-border) px-4 py-3">
+    <div className="flex items-center gap-2 overflow-hidden border-b border-(--color-border) px-4 py-3">
       <button
         onClick={() => onChange(addDays(selected, -1))}
         aria-label="Jour précédent"
@@ -434,7 +434,7 @@ function DateCarousel({ selected, today, onChange }: { selected: string; today: 
         <ChevronLeft className="h-4 w-4" strokeWidth={1.5} />
       </button>
 
-      <div className="flex flex-1 items-center gap-1 overflow-x-auto scrollbar-none">
+      <div className="flex flex-1 items-center gap-1 overflow-x-auto scrollbar-none [touch-action:pan-x]">
         {days.map((day) => {
           const d = parseLocalDate(day);
           const isSelected = day === selected;
