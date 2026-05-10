@@ -242,7 +242,7 @@ function SparklineTrendRenderer({ chart }: { chart: SparklineTrendDef }) {
             stroke="#aaaaaa"
             strokeDasharray="4 3"
             strokeWidth={1}
-            label={{ value: `moy. ${chart.baseline}`, position: "right", fontSize: 10, fill: "#aaaaaa", fontFamily: "var(--font-geist-mono,monospace)" }}
+            label={{ value: `moy. ${chart.baseline}`, position: "insideTopLeft", fontSize: 10, fill: "#aaaaaa", fontFamily: "var(--font-geist-mono,monospace)" }}
           />
           <Line
             dataKey="value"
@@ -312,8 +312,8 @@ function DivergingBarsRenderer({ chart }: { chart: DivergingBarsDef }) {
           }
 
           return (
-            <div key={it.label} className="flex items-center gap-3">
-              <span className="w-16 shrink-0 text-right text-[12px] text-(--color-fg-muted)">{it.label}</span>
+            <div key={it.label} className="flex items-center gap-2">
+              <span className="w-14 shrink-0 text-right text-[11px] text-(--color-fg-muted)">{it.label}</span>
               <div className="relative flex flex-1 items-center">
                 {/* Left side (below baseline) */}
                 <div className="flex flex-1 justify-end">
@@ -336,10 +336,10 @@ function DivergingBarsRenderer({ chart }: { chart: DivergingBarsDef }) {
                   )}
                 </div>
               </div>
-              <div className="w-28 shrink-0 font-mono text-[11px] tabular-nums text-(--color-fg-subtle)">
+              <div className="w-20 shrink-0 font-mono text-[11px] tabular-nums text-(--color-fg-subtle)">
                 <span className="text-(--color-fg)">{it.value}</span>
                 <span className="mx-1 opacity-40">/</span>
-                {it.baseline} {chart.unit}
+                {it.baseline}<span className="ml-0.5">{chart.unit}</span>
               </div>
             </div>
           );
@@ -564,10 +564,10 @@ export default function DailyPage() {
   const fmt = formatDisplay(selectedDate);
 
   return (
-    <div className="flex flex-1 flex-col">
+    <div className="flex flex-1 flex-col overflow-x-hidden">
       <DateCarousel selected={selectedDate} today={today} onChange={setSelectedDate} />
 
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-x-hidden overflow-y-auto">
         {loading ? (
           <LoadingSkeleton />
         ) : briefing ? (
