@@ -82,7 +82,7 @@ async function handler(
   if (upstream.status >= 300 && upstream.status < 400) {
     const location = upstream.headers.get("location")
     if (location) {
-      const absoluteLocation = location.startsWith("http") ? location : `${audience}${location}`
+      const absoluteLocation = (location.startsWith("http") ? location : `${audience}${location}`).replace(/^http:\/\//, "https://")
       upstream = await fetch(absoluteLocation, { method: req.method, headers: authHeaders, body })
     }
   }
