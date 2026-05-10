@@ -3,8 +3,8 @@
 import { useState, useEffect, useRef } from "react";
 import { ChevronLeft, ChevronRight, CalendarDays, Lightbulb } from "lucide-react";
 import {
-  BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid,
-  Tooltip, Legend, ResponsiveContainer,
+  LineChart, Line, XAxis, YAxis, CartesianGrid,
+  Tooltip, ResponsiveContainer, ReferenceLine,
 } from "recharts";
 import { cn } from "@/lib/utils";
 
@@ -46,7 +46,7 @@ function getScopeLabel(iso: string): string {
   return `Nuit du ${prev.getDate()} au ${d.getDate()}`;
 }
 
-/* Replace SCREAMING_SNAKE_CASE fallbacks (agent-side sanitization should catch these first) */
+/* Replace SCREAMING_SNAKE_CASE fallbacks */
 function humanizeScreaming(text: string): string {
   return text.replace(/\b[A-Z][A-Z_]*_[A-Z][A-Z_]*\b/g, (m) =>
     m.replace(/_/g, " ").toLowerCase()
@@ -55,38 +55,38 @@ function humanizeScreaming(text: string): string {
 
 /* ── API types ───────────────────────────────────────────── */
 
-interface ChartSeries {
-  label: string;
-  color: string;
-  style?: "solid" | "dashed";
-  data: number[];
-}
-
-interface BarChartDef {
-  type: "bar";
+interface StackedPhasesDef {
+  type: "stacked_phases";
   title: string;
-  labels: string[];
-  series: ChartSeries[];
   unit: string;
+  segments: { label: string; value: number; color: string }[];
 }
 
-interface GaugeDef {
-  type: "gauge";
+interface FactorBreakdownDef {
+  type: "factor_breakdown";
   title: string;
-  value: number;
-  max: number;
-  thresholds: { label: string; min: number; max: number; color: string }[];
+  total_label: string;
+  total_value: number;
+  factors: { label: string; contribution: number; color: string }[];
 }
 
-interface LineChartDef {
-  type: "line";
+interface SparklineTrendDef {
+  type: "sparkline_trend";
   title: string;
-  labels: string[];
-  series: ChartSeries[];
   unit: string;
+  current_value: number;
+  dates: string[];
+  values: number[];
+  baseline: number;
 }
 
-type ChartDef = BarChartDef | GaugeDef | LineChartDef;
+interface MetricGridDef {
+  type: "metric_grid";
+  title: string;
+  metrics: { label: string; value: number; unit: string; delta: number | null }[];
+}
+
+type ChartDef = StackedPhasesDef | FactorBreakdownDef | SparklineTrendDef | MetricGridDef;
 
 interface ApiSection {
   id: string;
@@ -97,81 +97,89 @@ interface ApiSection {
 
 interface ApiResponse {
   generated_at: string;
+  status: "feu_vert" | "vigilance" | "alerte";
   headline: string;
+  subtitle: string;
   sections: ApiSection[];
 }
 
 /* ── Mock ────────────────────────────────────────────────── */
 
 const MOCK: ApiResponse = {
-  generated_at: "2026-05-10T09:30:00+02:00",
-  headline: "Nuit pauvre après un gros trail — récupération incomplète, mais le corps tient : séance légère possible si les jambes le permettent.",
+  generated_at: "2026-05-10T09:00:00+00:00",
+  status: "vigilance",
+  headline: "Nuit du 9 mai nettement perturbée après un trail exigeant — le système nerveux tient, mais ne demande pas à être sollicité fort aujourd'hui",
+  subtitle: "Sortie légère en zone 2 envisageable, 45 min max, sans dénivelé.",
   sections: [
     {
       id: "sleep",
       title: "Nuit",
-      summary: "Score de 48/100 (POOR) pour 6h59 de sommeil total — très loin de la moyenne des 14 derniers jours (75/100, 7h06) avec seulement 25 min de REM contre 1h en moyenne.\nStructure de la nuit dégradée (feedback Garmin : NEGATIVE_POOR_STRUCTURE) : le sommeil profond est réduit à 51 min, le temps éveillé explose à 1h47, et l'HRV nocturne tombe à 54 ms contre 66 ms la nuit précédente.\nCause directe identifiée : le trail de 17,5 km / +573 m effectué le 08/05 (charge 161 TRIMP, effet TEMPO, FC moy 155 bpm) a clairement perturbé l'architecture du sommeil de récupération.",
+      summary: "La nuit du 9 mai est la pire de la quinzaine : score 48/100, structure nettement perturbée, avec 1h47 d'éveil fragmentant une durée brute de 6h59.\n\nLe contenu utile se décompose en 51 min de sommeil profond, seulement 25 min de REM (Rapid Eye Movement — la phase de récupération cognitive), et 5h43 de sommeil léger. Le REM est à son plus bas depuis 14 jours : la moyenne sur la période est de 66 min, soit 2,6 fois plus. Le sommeil profond, lui, se situe légèrement sous la moyenne (1h00 sur 14 j), sans s'effondrer.\n\nLa cause directe est identifiable : la veille, le 8 mai, tu as enchaîné 17,5 km de trail avec 573 m de dénivelé positif (D+) en 2h21 à FC moyenne 155 bpm — la charge la plus lourde de la fenêtre de 14 jours. Une nuit aussi fragmentée au lendemain d'un effort aussi intense est un signal classique de système nerveux encore sous tension, pas un accident isolé.\n\nLa Body Battery gagne quand même +54 points dans la nuit, ce qui signifie que la récupération énergétique a fonctionné même si la structure était mauvaise. Ce n'est pas une nuit à zéro — c'est une nuit incomplète.",
       chart: {
-        type: "bar",
-        title: "Structure de la nuit du 09/05 vs moyenne 14 jours",
-        labels: ["Profond", "Léger", "REM", "Éveillé"],
-        series: [
-          { label: "Nuit du 09/05 (min)", color: "#6c8ebf", data: [51, 343, 25, 107] },
-          { label: "Moyenne 14 j (min)",  color: "#aaaaaa", data: [60, 300, 60, 38]  },
-        ],
+        type: "stacked_phases",
+        title: "Structure de la nuit du 9 mai",
         unit: "min",
+        segments: [
+          { label: "Sommeil profond", value: 51,  color: "#1a237e" },
+          { label: "REM",             value: 25,  color: "#7b1fa2" },
+          { label: "Léger",           value: 343, color: "#42a5f5" },
+          { label: "Éveil",           value: 107, color: "#ef9a9a" },
+        ],
       },
     },
     {
       id: "recovery",
       title: "Récupération",
-      summary: "Training Readiness à 59/100 (MODERATE / RECOVERED_AND_READY) : le score est tiré vers le bas uniquement par le facteur sommeil (0 %), tandis que HRV (93 %), stress historique (97 %) et ACWR (96 %) sont tous au vert.\nLe temps de récupération résiduel de 502 heures signale que la charge accumulée sur 2 semaines reste perceptible par le système.\nLa Body Battery a regagné +54 points malgré la nuit dégradée — signe que l'organisme a malgré tout réussi à récupérer une partie de l'énergie dépensée.",
+      summary: "Le Training Readiness du jour s'établit à 59/100 — un niveau correct qui masque une tension réelle : le facteur sommeil contribue à hauteur de 0 %, tirant le score vers le bas, tandis que l'HRV (Variabilité de la Fréquence Cardiaque nocturne) et l'historique de stress portent respectivement 93 % et 97 % des signaux positifs.\n\nLe temps de récupération estimé par Garmin dépasse 500 heures — chiffre à ne pas lire au pied de la lettre, mais qui indique que la charge récente est jugée significative par l'algorithme. L'ACWR (ratio charge aiguë / charge chronique) est à 1,0, donc la balance de charge est équilibrée : tu n'es pas en surcharge absolue, mais tu n'as pas non plus de marge pour absorber un effort supplémentaire intense sans dégradation.\n\nLa FC de repos mesurée cette nuit est à 52 bpm, soit un bpm au-dessus de la moyenne sur 14 jours (51 bpm) et loin du pic bas à 47 bpm. L'écart est modeste mais cohérent avec une légère activation résiduelle du système nerveux sympathique après le trail du 8 mai.",
       chart: {
-        type: "gauge",
-        title: "Training Readiness",
-        value: 59,
-        max: 100,
-        thresholds: [
-          { label: "LOW",      min: 0,  max: 40,  color: "#e05c5c" },
-          { label: "MODERATE", min: 40, max: 60,  color: "#f0a500" },
-          { label: "HIGH",     min: 60, max: 100, color: "#5cb85c" },
+        type: "factor_breakdown",
+        title: "Facteurs du Training Readiness — 10 mai",
+        total_label: "Readiness",
+        total_value: 59,
+        factors: [
+          { label: "HRV nocturne",        contribution: 93, color: "#43a047" },
+          { label: "Historique de stress", contribution: 97, color: "#66bb6a" },
+          { label: "Temps de récupération",contribution: 86, color: "#ffa726" },
+          { label: "ACWR",                contribution: 96, color: "#29b6f6" },
+          { label: "Sommeil",             contribution: 0,  color: "#ef5350" },
         ],
       },
     },
     {
       id: "hrv",
       title: "HRV",
-      summary: "L'HRV nocturne à 54 ms cette nuit est dans la zone baseline (seuil bas : 53 ms) mais accuse une chute de 12 ms par rapport à la nuit précédente (66 ms) — le système nerveux autonome digère encore l'effort du trail.\nSur 14 jours, la courbe HRV présente deux creux marqués (44 ms le 02/05 et 48 ms les 26/04 et 06/05), coïncidant avec les jours post-séances les plus intenses.\nLa tendance de fond reste dans la zone équilibrée (baseline 53–75 ms), ce qui confirme qu'il n'y a pas de surmenage chronique — seulement une fatigue aiguë passagère.",
+      summary: "L'HRV nocturne de la nuit du 9 mai tombe à 54 ms — soit 12 ms sous le pic de la semaine passée (66 ms, nuit du 8 mai) et juste à la limite basse de la zone équilibrée (53–75 ms sur la fenêtre). Ce n'est pas une chute libre : le signal reste dans sa plage normale, mais il ne grimpe pas.\n\nLa dynamique sur 14 jours est en dents de scie plutôt qu'en tendance franche. Les valeurs basses (44 ms le 2 mai, 48 ms les 26 avril et 6 mai) coïncident systématiquement avec des nuits suivant ou précédant des efforts intenses. Les valeurs hautes (66–68 ms) apparaissent lors des nuits de récupération active. C'est un pattern de réponse saine : le système nerveux réagit à la charge et rebondit.\n\nLa moyenne hebdomadaire HRV est à 58 ms, dans la zone équilibrée. La baseline basse se situe à 53–55 ms selon les jours : la nuit du 9 mai est au ras de ce plancher, pas en-dessous. Le système nerveux a absorbé la charge du trail sans décrocher — mais il n'a pas encore repassé la main.",
       chart: {
-        type: "line",
-        title: "HRV nocturne 14 derniers jours",
-        labels: ["26/04","27/04","28/04","29/04","30/04","01/05","02/05","03/05","04/05","05/05","06/05","07/05","08/05","09/05"],
-        series: [
-          { label: "HRV nuit",       color: "#6c8ebf",                  data: [48,63,60,68,66,63,44,63,52,62,48,63,66,54] },
-          { label: "Baseline basse", color: "#aaaaaa", style: "dashed", data: [55,55,55,56,55,55,54,54,54,54,54,54,54,53] },
-          { label: "Baseline haute", color: "#dddddd", style: "dashed", data: [76,76,76,75,75,75,75,75,75,75,75,75,75,75] },
-        ],
+        type: "sparkline_trend",
+        title: "HRV nocturne — 14 derniers jours",
         unit: "ms",
+        current_value: 54,
+        dates: ["2026-04-26","2026-04-27","2026-04-28","2026-04-29","2026-04-30","2026-05-01","2026-05-02","2026-05-03","2026-05-04","2026-05-05","2026-05-06","2026-05-07","2026-05-08","2026-05-09"],
+        values: [48, 63, 60, 68, 66, 63, 44, 63, 52, 62, 48, 63, 66, 54],
+        baseline: 58.6,
       },
     },
     {
       id: "training",
       title: "Charge d'entraînement",
-      summary: "Semaine passée très chargée : trail TEMPO de 161 TRIMP le 08/05 (17,5 km / +573 m) après une séance seuil (LT) de 123 TRIMP le 05/05 — deux efforts élevés en 3 jours.\nL'ACWR est parfaitement équilibré à 1,0 (charge aiguë 368 / chronique 352), ce qui exclut tout risque de surcharge ou de désentraînement — la progression est cohérente.\nLe statut Garmin UNPRODUCTIVE contraste avec ces chiffres et s'explique probablement par la nuit dégradée qui pénalise le calcul interne ; le trend de fitness à +3 plaide pour une dynamique positive.",
+      summary: "Le statut d'entraînement du jour est non productif malgré un ACWR équilibré à 1,0 (charge aiguë 368, charge chronique 352). Ce paradoxe s'explique : la charge est bien dosée en volume, mais la qualité de récupération entre les séances n'est pas suffisante pour que le corps en tire un bénéfice adaptatif optimal — la nuit du 9 mai en est le symptôme le plus direct.\n\nLes 6 séances sur 14 jours se lisent en deux blocs. Un premier bloc actif fin avril (28 avril, 30 avril) à charge modérée (FC 142–149 bpm, 6–7 km). Un second bloc plus dense début mai : 15,5 km + 317 D+ le 3 mai, 5,8 km + 228 D+ le 5 mai, et le trail du 8 mai (17,5 km + 573 D+) sans repos complet entre chaque sortie. La sortie du 9 mai à 5,4 km / FC 95 bpm / allure 15 min/km est manifestement une marche ou sortie récupération — une bonne décision.\n\nLa tendance fitness est en légère hausse (+3). La machine progresse, mais elle demande une fenêtre de récupération franche pour consolider les adaptations. La surcharge n'est pas là — la sous-récupération ponctuellement, oui.",
       chart: {
-        type: "bar",
-        title: "Charge d'entraînement par séance (14 derniers jours)",
-        labels: ["28/04 Course", "30/04 Course", "03/05 Trail", "05/05 Intervalles", "08/05 Trail", "09/05 Marche"],
-        series: [
-          { label: "Charge (TRIMP)", color: "#6c8ebf", data: [56, 95, 138, 123, 161, 6] },
+        type: "metric_grid",
+        title: "Charge d'entraînement — 14 jours",
+        metrics: [
+          { label: "Charge aiguë",      value: 368, unit: "TRIMP", delta: null },
+          { label: "Charge chronique",  value: 352, unit: "TRIMP", delta: null },
+          { label: "ACWR",              value: 1.0, unit: "",      delta: null },
+          { label: "Tendance fitness",  value: 3,   unit: "",      delta: null },
+          { label: "FC repos (14 j)",   value: 51,  unit: "bpm",   delta: 1   },
+          { label: "Séances (14 j)",    value: 6,   unit: "",      delta: null },
         ],
-        unit: "TRIMP",
       },
     },
     {
-      id: "verdict",
-      title: "Verdict du jour",
-      summary: "Sortie légère possible aujourd'hui : footing 45–50 min en zone 1–2 max (FC < 140 bpm), sans dénivelé, pour activer la circulation sans ajouter de stress neuromusculaire.\nPriorité absolue : la nuit prochaine — coucher avant 22h30, limiter les écrans dès 21h pour maximiser le rebond REM dont le corps manque.\nÉviter toute séance de seuil ou de trail avant 48–72 h : l'ACWR est optimal, ne pas le déséquilibrer par un effort qui aggraverait la dette de récupération déjà visible sur l'HRV.",
+      id: "recommendation",
+      title: "Prescription du jour",
+      summary: "Une sortie courte en zone 2 (Z2) est envisageable : 40 à 50 min, FC plafonnée à 140 bpm, terrain plat, pas de D+. L'objectif est de maintenir le flux sans ajouter de stimulus intense que les nuits récentes n'ont pas les ressources pour absorber.\n\nCondition de repli : si les jambes sont lourdes dès le premier kilomètre ou si la FC monte à 140 bpm à allure Z2 habituelle, tu coupes à 30 min ou tu passes en marche active. Ce n'est pas une capitulation — c'est lire un signal clair.\n\nÀ éviter aujourd'hui : toute séance avec fractions, dénivelé, ou durée supérieure à 60 min. Le système nerveux est juste en dessous de sa zone d'équilibre HRV ; une charge supplémentaire mal dosée risque de repousser la récupération à demain soir au lieu de ce soir.\n\nIndicateur à surveiller ce soir : si l'HRV nocturne de la prochaine nuit repasse au-dessus de 60 ms et que la Body Battery monte de plus de +65, tu peux envisager une sortie plus engagée demain.",
       chart: null,
     },
   ],
@@ -181,18 +189,7 @@ function getMockBriefing(_iso: string): ApiResponse | null {
   return MOCK;
 }
 
-/* ── Headline parsing ────────────────────────────────────── */
-
-function parseHeadline(headline: string): { title: string; subtitle: string } {
-  const sep = " : ";
-  const idx = headline.indexOf(sep);
-  if (idx !== -1) {
-    return { title: headline.slice(0, idx), subtitle: headline.slice(idx + sep.length) };
-  }
-  return { title: headline, subtitle: "" };
-}
-
-/* ── Status derivation ───────────────────────────────────── */
+/* ── Status mapping ──────────────────────────────────────── */
 
 type Tone = "good" | "warning" | "danger";
 
@@ -206,18 +203,10 @@ const TONE_LABEL: Record<Tone, string> = {
   good: "Feu vert", warning: "Vigilance", danger: "Repos imposé",
 };
 
-function deriveStatus(sections: ApiSection[]): Tone | null {
-  for (const s of sections) {
-    if (s.chart?.type === "gauge") {
-      const { value, thresholds } = s.chart;
-      const bucket = [...thresholds].reverse().find((t) => value >= t.min);
-      if (!bucket) return "danger";
-      if (bucket.label === "HIGH") return "good";
-      if (bucket.label === "MODERATE") return "warning";
-      return "danger";
-    }
-  }
-  return null;
+function mapStatus(status: ApiResponse["status"]): Tone {
+  if (status === "feu_vert") return "good";
+  if (status === "vigilance") return "warning";
+  return "danger";
 }
 
 /* ── Recharts shared styles ──────────────────────────────── */
@@ -229,164 +218,150 @@ const AXIS = {
 };
 
 const TT = {
-  contentStyle: { background:"#fff", border:"1px solid #e8e8e8", borderRadius:6, fontSize:12, fontFamily:"var(--font-geist-mono,monospace)", padding:"6px 10px", boxShadow:"none" },
-  itemStyle: { color:"#232323" },
-  labelStyle: { color:"#969696", fontSize:10, marginBottom:2 },
-  cursor: { fill:"#f2f2f2" },
+  contentStyle: { background: "#fff", border: "1px solid #e8e8e8", borderRadius: 6, fontSize: 12, fontFamily: "var(--font-geist-mono,monospace)", padding: "6px 10px", boxShadow: "none" },
+  itemStyle: { color: "#232323" },
+  labelStyle: { color: "#969696", fontSize: 10, marginBottom: 2 },
+  cursor: { fill: "#f2f2f2" },
 };
 
-/* ── Chart: bar ──────────────────────────────────────────── */
+/* ── Chart: stacked_phases ───────────────────────────────── */
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function MultilineTick({ x, y, payload }: any) {
-  const lines: string[] = String(payload.value).split("\n");
-  return (
-    <g transform={`translate(${x},${y})`}>
-      {lines.map((line, i) => (
-        <text key={i} x={0} y={0} dy={12 + i * 11} textAnchor="middle" fontSize={10} fill="#969696" fontFamily="var(--font-geist-mono,monospace)">
-          {line}
-        </text>
-      ))}
-    </g>
-  );
-}
-
-function BarChartRenderer({ chart }: { chart: BarChartDef }) {
-  const data = chart.labels.map((label, i) => {
-    const row: Record<string, string | number> = { label };
-    chart.series.forEach((s) => { row[s.label] = s.data[i]; });
-    return row;
-  });
-  const multiline = chart.labels.some((l) => l.includes("\n"));
-  const xHeight = multiline ? 36 : 20;
-
+function StackedPhasesRenderer({ chart }: { chart: StackedPhasesDef }) {
+  const total = chart.segments.reduce((sum, s) => sum + s.value, 0);
   return (
     <div className="mt-5 rounded-(--radius-lg) bg-(--color-bg-subtle) px-5 py-[18px]">
       <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.08em] text-(--color-fg-muted)">{chart.title}</p>
-      <ResponsiveContainer width="100%" height={220}>
-        <BarChart data={data} barCategoryGap="30%" barGap={2} margin={{ top: 4, right: 8, bottom: xHeight - 20, left: 0 }}>
-          <CartesianGrid vertical={false} stroke="#e8e8e8" />
-          <XAxis dataKey="label" tick={multiline ? <MultilineTick /> : { ...AXIS.tick }} axisLine={false} tickLine={false} interval={0} />
-          <YAxis {...AXIS} tickFormatter={(v) => `${v}`} width={28} />
-          <Tooltip {...TT} formatter={(v) => [`${v} ${chart.unit}`]} />
-          {chart.series.length > 1 && (
-            <Legend wrapperStyle={{ fontSize: 11, fontFamily: "var(--font-geist-mono,monospace)", paddingTop: 8 }} />
-          )}
-          {chart.series.map((s) => (
-            <Bar key={s.label} dataKey={s.label} fill={s.color} radius={[3, 3, 0, 0]} maxBarSize={32} />
-          ))}
-        </BarChart>
-      </ResponsiveContainer>
+      <div className="flex h-7 w-full overflow-hidden rounded-(--radius-sm)">
+        {chart.segments.map((seg) => (
+          <div
+            key={seg.label}
+            style={{ width: `${(seg.value / total) * 100}%`, background: seg.color }}
+            title={`${seg.label} : ${seg.value} ${chart.unit}`}
+          />
+        ))}
+      </div>
+      <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1.5">
+        {chart.segments.map((seg) => (
+          <div key={seg.label} className="flex items-center gap-1.5">
+            <span className="h-2 w-2 shrink-0 rounded-[2px]" style={{ background: seg.color }} />
+            <span className="text-[11px] text-(--color-fg-muted)">{seg.label}</span>
+            <span className="font-mono text-[11px] tabular-nums text-(--color-fg-subtle)">
+              {seg.value} {chart.unit}
+            </span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
 
-/* ── Chart: line ─────────────────────────────────────────── */
+/* ── Chart: factor_breakdown ─────────────────────────────── */
 
-function LineChartRenderer({ chart }: { chart: LineChartDef }) {
-  const data = chart.labels.map((label, i) => {
-    const row: Record<string, string | number> = { label };
-    chart.series.forEach((s) => { row[s.label] = s.data[i]; });
-    return row;
+function FactorBreakdownRenderer({ chart }: { chart: FactorBreakdownDef }) {
+  return (
+    <div className="mt-5 rounded-(--radius-lg) bg-(--color-bg-subtle) px-5 py-[18px]">
+      <div className="mb-4 flex items-baseline justify-between">
+        <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-(--color-fg-muted)">{chart.title}</p>
+        <div className="flex items-baseline gap-1">
+          <span className="font-mono text-2xl font-medium tabular-nums leading-none text-(--color-fg)">
+            {chart.total_value}
+          </span>
+          <span className="text-[11px] text-(--color-fg-subtle)">/ 100</span>
+        </div>
+      </div>
+      <div className="flex flex-col gap-3">
+        {chart.factors.map((f) => (
+          <div key={f.label} className="flex flex-col gap-1">
+            <div className="flex items-center justify-between">
+              <span className="text-[12px] text-(--color-fg-muted)">{f.label}</span>
+              <span className="font-mono text-[11px] tabular-nums text-(--color-fg-subtle)">{f.contribution}%</span>
+            </div>
+            <div className="h-[5px] w-full overflow-hidden rounded-full bg-(--color-bg-muted)">
+              <div
+                className="h-full rounded-full"
+                style={{ width: `${f.contribution}%`, background: f.color }}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ── Chart: sparkline_trend ──────────────────────────────── */
+
+function SparklineTrendRenderer({ chart }: { chart: SparklineTrendDef }) {
+  const data = chart.dates.map((date, i) => {
+    const [, m, d] = date.split("-");
+    return { label: `${d}/${m}`, value: chart.values[i] };
   });
 
   return (
     <div className="mt-5 rounded-(--radius-lg) bg-(--color-bg-subtle) px-5 py-[18px]">
-      <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.08em] text-(--color-fg-muted)">{chart.title}</p>
-      <ResponsiveContainer width="100%" height={200}>
+      <div className="mb-4 flex items-baseline justify-between">
+        <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-(--color-fg-muted)">{chart.title}</p>
+        <div className="flex items-baseline gap-1">
+          <span className="font-mono text-2xl font-medium tabular-nums leading-none text-(--color-fg)">
+            {chart.current_value}
+          </span>
+          <span className="text-[11px] text-(--color-fg-subtle)">{chart.unit}</span>
+        </div>
+      </div>
+      <ResponsiveContainer width="100%" height={180}>
         <LineChart data={data} margin={{ top: 4, right: 8, bottom: 0, left: 0 }}>
           <CartesianGrid vertical={false} stroke="#e8e8e8" />
           <XAxis dataKey="label" {...AXIS} interval={1} />
           <YAxis {...AXIS} domain={["auto", "auto"]} width={28} />
           <Tooltip {...TT} formatter={(v) => [`${v} ${chart.unit}`]} />
-          <Legend wrapperStyle={{ fontSize: 11, fontFamily: "var(--font-geist-mono,monospace)", paddingTop: 8 }} />
-          {chart.series.map((s) => (
-            <Line
-              key={s.label}
-              dataKey={s.label}
-              stroke={s.color}
-              strokeWidth={s.style === "dashed" ? 1 : 1.5}
-              strokeDasharray={s.style === "dashed" ? "5 3" : undefined}
-              dot={false}
-              activeDot={s.style === "dashed" ? false : { r: 3, strokeWidth: 0 }}
-            />
-          ))}
+          <ReferenceLine
+            y={chart.baseline}
+            stroke="#aaaaaa"
+            strokeDasharray="4 3"
+            strokeWidth={1}
+            label={{ value: `moy. ${chart.baseline}`, position: "right", fontSize: 10, fill: "#aaaaaa", fontFamily: "var(--font-geist-mono,monospace)" }}
+          />
+          <Line
+            dataKey="value"
+            stroke="#6c8ebf"
+            strokeWidth={1.5}
+            dot={false}
+            activeDot={{ r: 3, strokeWidth: 0 }}
+          />
         </LineChart>
       </ResponsiveContainer>
     </div>
   );
 }
 
-/* ── Chart: gauge (SVG) ──────────────────────────────────── */
+/* ── Chart: metric_grid ──────────────────────────────────── */
 
-function GaugeRenderer({ chart }: { chart: GaugeDef }) {
-  const { value, max, thresholds } = chart;
-  const cx = 110, cy = 88, outerR = 72, innerR = 50;
-
-  function polar(v: number, r: number) {
-    const angle = Math.PI * (1 - v / max);
-    return { x: cx + r * Math.cos(angle), y: cy - r * Math.sin(angle) };
-  }
-
-  function segment(from: number, to: number) {
-    const p1o = polar(from, outerR), p2o = polar(to, outerR);
-    const p1i = polar(from, innerR), p2i = polar(to, innerR);
-    return [
-      `M${p1o.x.toFixed(2)} ${p1o.y.toFixed(2)}`,
-      `A${outerR} ${outerR} 0 0 1 ${p2o.x.toFixed(2)} ${p2o.y.toFixed(2)}`,
-      `L${p2i.x.toFixed(2)} ${p2i.y.toFixed(2)}`,
-      `A${innerR} ${innerR} 0 0 0 ${p1i.x.toFixed(2)} ${p1i.y.toFixed(2)}`,
-      "Z",
-    ].join(" ");
-  }
-
-  const active = [...thresholds].reverse().find((t) => value >= t.min) ?? thresholds[0];
-  const needleTip = polar(value, outerR - 6);
-
+function MetricGridRenderer({ chart }: { chart: MetricGridDef }) {
   return (
     <div className="mt-5 rounded-(--radius-lg) bg-(--color-bg-subtle) px-5 py-[18px]">
-      <p className="mb-3 text-[11px] font-medium uppercase tracking-[0.08em] text-(--color-fg-muted)">{chart.title}</p>
-      <div className="flex flex-col items-center gap-3">
-        <svg viewBox="0 0 220 100" className="w-full max-w-[260px]" aria-hidden>
-          {thresholds.map((t) => (
-            <path key={`bg-${t.label}`} d={segment(t.min, t.max)} fill={t.color} opacity={0.12} />
-          ))}
-          {value > 0 && (
-            <path d={segment(0, Math.min(value, max))} fill={active.color} opacity={0.9} />
-          )}
-          {thresholds.map((t) => {
-            const mid = (t.min + t.max) / 2;
-            const p = polar(mid, outerR + 14);
-            return (
-              <text
-                key={`lbl-${t.label}`}
-                x={p.x.toFixed(2)} y={p.y.toFixed(2)}
-                textAnchor="middle" dominantBaseline="middle"
-                fontSize={8} fontFamily="var(--font-geist-sans,sans-serif)"
-                fill={t.color} fontWeight={500}
-              >
-                {t.label}
-              </text>
-            );
-          })}
-          <line
-            x1={cx} y1={cy}
-            x2={needleTip.x.toFixed(2)} y2={needleTip.y.toFixed(2)}
-            stroke="#1a1a1a" strokeWidth={1.5} strokeLinecap="round"
-          />
-          <circle cx={cx} cy={cy} r={4} fill="#1a1a1a" />
-        </svg>
-
-        <div className="flex items-baseline gap-2">
-          <span className="font-mono text-4xl font-medium tabular-nums leading-none" style={{ color: active.color }}>
-            {value}
-          </span>
-          <span className="text-sm text-(--color-fg-muted)">/ {max}</span>
-          <span className="ml-1 rounded-(--radius-sm) border px-2 py-0.5 text-xs font-medium"
-            style={{ color: active.color, borderColor: active.color, background: `${active.color}18` }}>
-            {active.label}
-          </span>
-        </div>
+      <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.08em] text-(--color-fg-muted)">{chart.title}</p>
+      <div className="grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3">
+        {chart.metrics.map((m) => (
+          <div key={m.label} className="flex flex-col gap-0.5">
+            <span className="text-[11px] uppercase tracking-[0.05em] text-(--color-fg-subtle)">{m.label}</span>
+            <div className="flex items-baseline gap-1">
+              <span className="font-mono text-xl font-medium tabular-nums leading-tight text-(--color-fg)">
+                {m.value}
+              </span>
+              {m.unit && (
+                <span className="text-[11px] text-(--color-fg-muted)">{m.unit}</span>
+              )}
+            </div>
+            {m.delta !== null && (
+              <span className={cn(
+                "font-mono text-[11px] tabular-nums",
+                m.delta > 0 ? "text-(--color-danger)" : m.delta < 0 ? "text-(--color-success)" : "text-(--color-fg-subtle)"
+              )}>
+                {m.delta > 0 ? "+" : ""}{m.delta}
+              </span>
+            )}
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -395,17 +370,18 @@ function GaugeRenderer({ chart }: { chart: GaugeDef }) {
 /* ── Chart dispatcher ────────────────────────────────────── */
 
 function ChartRenderer({ chart }: { chart: ChartDef }) {
-  if (chart.type === "bar")   return <BarChartRenderer chart={chart} />;
-  if (chart.type === "line")  return <LineChartRenderer chart={chart} />;
-  if (chart.type === "gauge") return <GaugeRenderer chart={chart} />;
+  if (chart.type === "stacked_phases")  return <StackedPhasesRenderer chart={chart} />;
+  if (chart.type === "factor_breakdown") return <FactorBreakdownRenderer chart={chart} />;
+  if (chart.type === "sparkline_trend") return <SparklineTrendRenderer chart={chart} />;
+  if (chart.type === "metric_grid")     return <MetricGridRenderer chart={chart} />;
   return null;
 }
 
 /* ── Section ─────────────────────────────────────────────── */
 
-function SectionBlock({ section, status }: { section: ApiSection; status: Tone | null }) {
+function SectionBlock({ section, status }: { section: ApiSection; status: Tone }) {
   const paragraphs = section.summary.split("\n").filter(Boolean).map(humanizeScreaming);
-  const isVerdict = section.id === "verdict";
+  const isRecommendation = section.id === "recommendation";
 
   return (
     <section>
@@ -420,13 +396,13 @@ function SectionBlock({ section, status }: { section: ApiSection; status: Tone |
         {section.title}
       </h3>
 
-      {isVerdict ? (
+      {isRecommendation ? (
         <div
           className={cn(
             "rounded-(--radius-lg) p-5",
             status === "good"    && "bg-[--color-success]/10",
             status === "warning" && "bg-[--color-warning]/10",
-            (status === "danger" || !status) && "bg-[--color-danger]/10",
+            status === "danger"  && "bg-[--color-danger]/10",
           )}
         >
           <div className="mb-3 flex items-center gap-2">
@@ -548,8 +524,7 @@ function EmptyDay() {
 export default function DailyPage() {
   const [selectedDate, setSelectedDate] = useState(() => toLocalISODate(new Date()));
   const briefing = getMockBriefing(selectedDate);
-  const status = briefing ? deriveStatus(briefing.sections) : null;
-  const { title, subtitle } = briefing ? parseHeadline(briefing.headline) : { title: "", subtitle: "" };
+  const status = briefing ? mapStatus(briefing.status) : "warning";
   const fmt = formatDisplay(selectedDate);
 
   return (
@@ -569,11 +544,9 @@ export default function DailyPage() {
                   <span className="mx-2 opacity-50">·</span>
                   {getScopeLabel(selectedDate)}
                 </p>
-                {status && (
-                  <span className={cn("inline-flex h-5 items-center rounded-full border px-2 text-[11px] font-medium", TONE_PILL[status])}>
-                    {TONE_LABEL[status]}
-                  </span>
-                )}
+                <span className={cn("inline-flex h-5 items-center rounded-full border px-2 text-[11px] font-medium", TONE_PILL[status])}>
+                  {TONE_LABEL[status]}
+                </span>
               </div>
 
               {/* Headline éditorial — sérif */}
@@ -581,18 +554,16 @@ export default function DailyPage() {
                 className="text-[1.75rem] font-[500] leading-[1.25] text-(--color-fg)"
                 style={{ fontFamily: "var(--font-serif)", letterSpacing: "-0.01em" }}
               >
-                {title}
+                {briefing.headline}
               </h1>
 
-              {/* Sous-titre italique */}
-              {subtitle && (
-                <p
-                  className="mt-3 text-base italic text-(--color-fg-muted)"
-                  style={{ fontFamily: "var(--font-serif)" }}
-                >
-                  {subtitle}
-                </p>
-              )}
+              {/* Sous-titre */}
+              <p
+                className="mt-3 text-base italic text-(--color-fg-muted)"
+                style={{ fontFamily: "var(--font-serif)" }}
+              >
+                {briefing.subtitle}
+              </p>
 
               {/* Séparateur */}
               <hr
