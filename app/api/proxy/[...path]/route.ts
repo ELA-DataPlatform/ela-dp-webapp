@@ -53,8 +53,9 @@ async function handler(
     return NextResponse.json({ error: "NEXT_PUBLIC_API_URL non configurée" }, { status: 500 })
   }
 
-  const { path } = await params
-  const upstreamUrl = `${audience}/${path.join("/")}${req.nextUrl.search}`
+  await params // resolve params (unused: path derived from req.nextUrl)
+  const apiPath = req.nextUrl.pathname.replace(/^\/api\/proxy/, "")
+  const upstreamUrl = `${audience}${apiPath}${req.nextUrl.search}`
 
   let token: string
   try {
