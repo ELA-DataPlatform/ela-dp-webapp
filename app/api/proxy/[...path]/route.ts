@@ -55,7 +55,9 @@ async function handler(
 
   await params // resolve params (unused: path derived from req.nextUrl)
   const apiPath = req.nextUrl.pathname.replace(/^\/api\/proxy/, "")
-  const upstreamUrl = `${audience}${apiPath}${req.nextUrl.search}`
+  // Vercel strips trailing slashes — add it back so FastAPI doesn't 307
+  const apiPathWithSlash = apiPath.endsWith("/") ? apiPath : `${apiPath}/`
+  const upstreamUrl = `${audience}${apiPathWithSlash}${req.nextUrl.search}`
 
   let token: string
   try {
@@ -82,7 +84,8 @@ async function handler(
   if (upstream.status >= 300 && upstream.status < 400) {
     const location = upstream.headers.get("location")
     if (location) {
-      upstream = await fetch(location, { method: req.method, headers: authHeaders, body })
+      const absoluteLocation = location.startsWith("http") ? location : `${audience}${location}`
+      upstream = await fetch(absoluteLocation, { method: req.method, headers: authHeaders, body })
     }
   }
 
