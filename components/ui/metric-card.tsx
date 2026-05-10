@@ -37,7 +37,7 @@ function ChartTooltip({ active, payload, label, unit }: any) {
   const dateLabel = payload[0]?.payload?.day ?? label;
   const formatted = Number.isInteger(raw) ? raw : raw.toFixed(1);
   return (
-    <div className="rounded-[--radius-sm] border border-(--color-border) bg-(--color-bg-elevated) px-2.5 py-1.5">
+    <div className="rounded-(--radius-sm) border border-(--color-border) bg-(--color-bg-elevated) px-2.5 py-1.5">
       <p className="font-mono text-xs tabular-nums text-(--color-fg)">
         {formatted}
         {unit && <span className="ml-0.5 text-(--color-fg-muted)">{unit}</span>}
@@ -72,7 +72,7 @@ export function MetricCard({
       : `${isPositive ? "+" : ""}${Math.round(rawDelta * 10) / 10}`;
 
   return (
-    <div className={cn("flex h-full flex-col rounded-[--radius-md] border border-(--color-border) bg-(--color-bg-elevated) p-5", className)}>
+    <div className={cn("flex h-full flex-col rounded-(--radius-md) border border-(--color-border) bg-(--color-bg-elevated) py-4 px-[18px]", className)}>
       <div className="flex items-start justify-between gap-4">
         <div className="flex flex-col gap-0.5">
           <span className="text-2xs font-medium uppercase tracking-[0.08em] text-(--color-fg-muted)">
@@ -110,7 +110,7 @@ export function MetricCard({
         {mounted && <ResponsiveContainer width="100%" height={100}>
           {chartType === "bar" ? (
             <BarChart data={data} margin={{ top: 8, right: 4, left: 4, bottom: 0 }} barCategoryGap="30%">
-              <YAxis hide domain={[0, "dataMax + 2"]} />
+              <YAxis hide domain={["dataMin - 2", "dataMax + 2"]} />
               <XAxis
                 dataKey="day"
                 interval={0}

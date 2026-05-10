@@ -54,7 +54,7 @@ export function TrainingStateCard({
   const config = STATE_CONFIG[state];
 
   return (
-    <div className="flex h-full flex-col justify-between rounded-[--radius-md] border border-(--color-border) bg-(--color-bg-elevated) p-4 lg:p-6">
+    <div className="flex h-full flex-col justify-between rounded-(--radius-md) border border-(--color-border) bg-(--color-bg-elevated) py-4 px-[18px] lg:py-5 lg:px-6">
       {/* Section 1 — titre + état */}
       <div>
         <span className="text-2xs font-medium uppercase tracking-[0.08em] text-(--color-fg-muted)">

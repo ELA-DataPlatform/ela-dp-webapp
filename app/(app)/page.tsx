@@ -2,12 +2,13 @@
 
 import { useState, useEffect } from "react";
 import { apiFetch } from "@/lib/api";
-import { MetricCard } from "@/components/ui/metric-card";
 import { ActivityCard } from "@/components/ui/activity-card";
 import { SectionHeader } from "@/components/ui/section-header";
 import { TrainingStateCard } from "@/components/ui/training-state-card";
 import { HealthCard } from "@/components/ui/health-card";
 import { MusicListeningCard, MusicRankingCard } from "@/components/ui/music-card";
+import { GoalCard } from "@/components/ui/goal-card";
+import { DayHeroCard } from "@/components/ui/day-hero-card";
 
 // ─── API types ─────────────────────────────────────────────────────────────
 
@@ -158,7 +159,7 @@ function parsePolyline(raw: string): [number, number][] {
 
 function SkeletonCard({ className }: { className?: string }) {
   return (
-    <div className={`rounded-[--radius-md] border border-(--color-border) bg-(--color-bg-elevated) p-5 ${className ?? ""}`}>
+    <div className={`rounded-(--radius-md) border border-(--color-border) bg-(--color-bg-elevated) p-5 ${className ?? ""}`}>
       <div className="mb-3 h-2.5 w-24 animate-pulse rounded bg-(--color-bg-muted)" />
       <div className="h-8 w-32 animate-pulse rounded bg-(--color-bg-muted)" />
       <div className="mt-2 h-2.5 w-20 animate-pulse rounded bg-(--color-bg-muted)" />
@@ -227,12 +228,13 @@ export default function HomePage() {
 function HomepageContent({ data }: { data: HomepageData }) {
   // ── Running ──────────────────────────────────────────────
   const running = data.running[0];
-  const runningDays = running.days.map((d) => ({
+  const runningDays = running.days.slice(-10).map((d) => ({
     day: d.day_label,
-    letter: d.day_letter,
     value: d.distance_km,
   }));
-  const currentWeekStartIndex = running.days.findIndex((d) => d.is_current_week);
+  const runningDeltaPct = Math.round(running.week_km_delta_pct);
+  const runningDeltaStr = `${runningDeltaPct >= 0 ? "+" : ""}${runningDeltaPct}% vs sem. préc.`;
+  const runningDeltaTone = runningDeltaPct >= 0 ? "success" : "danger";
 
   // ── Training state ────────────────────────────────────────
   const ts = data.training_state[0];
@@ -321,27 +323,36 @@ function HomepageContent({ data }: { data: HomepageData }) {
 
   return (
     <>
+      <DayHeroCard
+        extraCard={
+          <GoalCard
+            name="Marathon de la MaXi Race d'Annecy"
+            distance="42 km"
+            elevation="+1 600 m D+"
+            date="2026-05-31"
+            dateLabel="31 mai 2026"
+            prepStart="2026-04-01"
+          />
+        }
+      />
+
       <section>
         <SectionHeader label="Sport · Course à pied" />
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 lg:gap-4 lg:auto-rows-[280px]">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 lg:gap-4 lg:auto-rows-[280px]">
           <TrainingStateCard
             state={ts.training_state}
             metrics={trainingMetrics}
             goal={ts.active_goal_name ?? undefined}
             goalDaysLeft={ts.active_goal_days_left ?? undefined}
           />
-          <MetricCard
-            className="sm:col-span-2"
+          <HealthCard
             title="Kilomètres"
-            subtitle="Semaine en cours"
-            footer="Sem. -1 grisée · sem. courante en noir · Garmin Connect"
-            data={runningDays}
-            unit="km"
-            currentValue={running.current_week_km}
-            previousValue={running.previous_week_km}
+            avgValue={`${running.current_week_km.toFixed(1)} km`}
+            primaryDelta={runningDeltaStr}
+            primaryDeltaTone={runningDeltaTone as "success" | "danger"}
+            trend={runningDays}
             chartType="bar"
-            deltaMode="percent"
-            currentWeekStartIndex={currentWeekStartIndex >= 0 ? currentWeekStartIndex : 7}
+            tooltipFormatter={(v) => `${v.toFixed(1)} km`}
           />
           {lastActivity && (
             <ActivityCard
@@ -357,14 +368,14 @@ function HomepageContent({ data }: { data: HomepageData }) {
 
       <section className="mt-6 lg:mt-8">
         <SectionHeader label="Santé · Récupération" />
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 lg:gap-4 lg:auto-rows-[280px]">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 lg:gap-4 lg:auto-rows-[240px]">
           <HealthCard
             title="Sleep Score"
             avgValue={sleepScoreDisplay}
             primaryDelta={`${fmtDeltaSign(health.delta_sleep_score)} pts vs moy.`}
             primaryDeltaTone={health.delta_sleep_score_tone as "success" | "warning" | "danger" | "neutral"}
             trend={sleepScoreTrend}
-            footer="Score de sommeil · 10 derniers jours · Garmin Connect"
+            chartType="bar"
           />
           <HealthCard
             title="Sommeil"
@@ -372,8 +383,8 @@ function HomepageContent({ data }: { data: HomepageData }) {
             primaryDelta={`${fmtDeltaSign(health.delta_sleep_minutes)} min vs moy.`}
             primaryDeltaTone={health.delta_sleep_minutes > 0 ? "success" : health.delta_sleep_minutes < 0 ? "danger" : "neutral"}
             trend={sleepDurationTrend}
+            chartType="bar"
             tooltipFormatter={fmtDurationMin}
-            footer="Durée · 10 derniers jours · Garmin Connect"
           />
           <HealthCard
             title="Récupération"
@@ -381,7 +392,7 @@ function HomepageContent({ data }: { data: HomepageData }) {
             primaryDelta={`${fmtDeltaSign(health.delta_hrv_ms)} ms vs moy.`}
             primaryDeltaTone={health.delta_hrv_ms > 0 ? "success" : health.delta_hrv_ms < 0 ? "danger" : "neutral"}
             trend={hrvTrend}
-            footer="HRV matinal · 10 derniers jours · Garmin Connect"
+            chartType="bar"
           />
           <HealthCard
             title="Énergie"
@@ -390,7 +401,6 @@ function HomepageContent({ data }: { data: HomepageData }) {
             primaryDeltaTone={health.delta_body_battery_tone as "success" | "warning" | "danger" | "neutral"}
             trend={batteryTrend}
             chartType="battery-bar"
-            footer="Couché → réveil · 10 derniers jours · Garmin Connect"
           />
         </div>
       </section>
@@ -403,24 +413,20 @@ function HomepageContent({ data }: { data: HomepageData }) {
             totalTime={musicTrend.total_label}
             delta={musicDeltaStr}
             deltaTone={musicTrend.delta_tone as "success" | "warning" | "danger" | "neutral"}
-            footer="Temps d'écoute · 10 derniers jours · Spotify"
           />
           <MusicRankingCard
             title="Top Artistes"
             items={toRankItems(rankings.artists)}
-            footer={`${rankings.period_start} → ${rankings.period_end} · Spotify`}
             viewMoreHref="/music"
           />
           <MusicRankingCard
             title="Top Albums"
             items={toRankItems(rankings.albums)}
-            footer={`${rankings.period_start} → ${rankings.period_end} · Spotify`}
             viewMoreHref="/music"
           />
           <MusicRankingCard
             title="Top Titres"
             items={toRankItems(rankings.tracks)}
-            footer={`${rankings.period_start} → ${rankings.period_end} · Spotify`}
             viewMoreHref="/music"
           />
         </div>
