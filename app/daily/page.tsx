@@ -545,11 +545,15 @@ export default function DailyPage() {
       : `/webapp/daily-report/?date=${selectedDate}`;
 
     apiFetch(path)
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) return null;
+        return res.json();
+      })
       .then((envelope: unknown) => {
+        if (!envelope) { setBriefing(null); return; }
         // API wraps the payload: { "output": "<JSON string>" }
         let data: unknown = envelope;
-        if (envelope && typeof envelope === "object" && "output" in envelope) {
+        if (typeof envelope === "object" && "output" in envelope) {
           const raw = (envelope as { output: unknown }).output;
           data = typeof raw === "string" ? JSON.parse(raw) : raw;
         }
