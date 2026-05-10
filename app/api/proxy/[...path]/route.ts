@@ -55,9 +55,7 @@ async function handler(
 
   await params // resolve params (unused: path derived from req.nextUrl)
   const apiPath = req.nextUrl.pathname.replace(/^\/api\/proxy/, "")
-  // Vercel strips trailing slashes — add it back so FastAPI doesn't 307
-  const apiPathWithSlash = apiPath.endsWith("/") ? apiPath : `${apiPath}/`
-  const upstreamUrl = `${audience}${apiPathWithSlash}${req.nextUrl.search}`
+  const upstreamUrl = `${audience}${apiPath}${req.nextUrl.search}`
 
   let token: string
   try {
