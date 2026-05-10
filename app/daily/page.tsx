@@ -415,8 +415,7 @@ function SectionBlock({ section, status }: { section: ApiSection; status: Tone }
 
 /* ── DateCarousel ────────────────────────────────────────── */
 
-function DateCarousel({ selected, onChange }: { selected: string; onChange: (iso: string) => void }) {
-  const today = toLocalISODate(new Date());
+function DateCarousel({ selected, today, onChange }: { selected: string; today: string; onChange: (iso: string) => void }) {
   const isAtToday = selected === today;
   const days = Array.from({ length: 14 }, (_, i) => addDays(today, i - 13));
 
@@ -467,6 +466,7 @@ function DateCarousel({ selected, onChange }: { selected: string; onChange: (iso
         onClick={() => onChange(addDays(selected, 1))}
         disabled={isAtToday}
         aria-label="Jour suivant"
+        suppressHydrationWarning
         className={cn(
           "flex h-7 w-7 shrink-0 items-center justify-center rounded-(--radius-sm) text-(--color-fg-subtle) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-accent)",
           isAtToday ? "cursor-not-allowed opacity-30" : "hover:bg-(--color-bg-muted) hover:text-(--color-fg)"
@@ -531,6 +531,7 @@ function EmptyDay() {
 /* ── Page ────────────────────────────────────────────────── */
 
 export default function DailyPage() {
+  const [today] = useState(() => toLocalISODate(new Date()));
   const [selectedDate, setSelectedDate] = useState(() => toLocalISODate(new Date()));
   const [briefing, setBriefing] = useState<ApiResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -539,7 +540,6 @@ export default function DailyPage() {
     setLoading(true);
     setBriefing(null);
 
-    const today = toLocalISODate(new Date());
     const path = selectedDate === today
       ? "/webapp/daily-report/"
       : `/webapp/daily-report/?date=${selectedDate}`;
@@ -565,7 +565,7 @@ export default function DailyPage() {
 
   return (
     <div className="flex flex-1 flex-col">
-      <DateCarousel selected={selectedDate} onChange={setSelectedDate} />
+      <DateCarousel selected={selectedDate} today={today} onChange={setSelectedDate} />
 
       <div className="flex-1 overflow-y-auto">
         {loading ? (
