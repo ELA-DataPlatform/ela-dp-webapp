@@ -182,9 +182,8 @@ export default function HomePage() {
 
   useEffect(() => {
     apiFetch("/webapp/homepage")
-      .then((r) => r.ok ? r.json() : null)
-      .then((d) => { if (d) setData(d); })
-      .catch(() => {})
+      .then((r) => r.json())
+      .then(setData)
       .finally(() => setLoading(false));
   }, []);
 
