@@ -7,6 +7,7 @@ import {
   Tooltip, ResponsiveContainer, ReferenceLine,
 } from "recharts";
 import { cn } from "@/lib/utils";
+import { apiFetch } from "@/lib/api";
 
 /* ── Date helpers ────────────────────────────────────────── */
 
@@ -103,91 +104,6 @@ interface ApiResponse {
   sections: ApiSection[];
 }
 
-/* ── Mock ────────────────────────────────────────────────── */
-
-const MOCK: ApiResponse = {
-  generated_at: "2026-05-10T09:00:00+00:00",
-  status: "vigilance",
-  headline: "Nuit du 9 mai nettement perturbée après un trail exigeant — le système nerveux tient, mais ne demande pas à être sollicité fort aujourd'hui",
-  subtitle: "Sortie légère en zone 2 envisageable, 45 min max, sans dénivelé.",
-  sections: [
-    {
-      id: "sleep",
-      title: "Nuit",
-      summary: "La nuit du 9 mai est la pire de la quinzaine : score 48/100, structure nettement perturbée, avec 1h47 d'éveil fragmentant une durée brute de 6h59.\n\nLe contenu utile se décompose en 51 min de sommeil profond, seulement 25 min de REM (Rapid Eye Movement — la phase de récupération cognitive), et 5h43 de sommeil léger. Le REM est à son plus bas depuis 14 jours : la moyenne sur la période est de 66 min, soit 2,6 fois plus. Le sommeil profond, lui, se situe légèrement sous la moyenne (1h00 sur 14 j), sans s'effondrer.\n\nLa cause directe est identifiable : la veille, le 8 mai, tu as enchaîné 17,5 km de trail avec 573 m de dénivelé positif (D+) en 2h21 à FC moyenne 155 bpm — la charge la plus lourde de la fenêtre de 14 jours. Une nuit aussi fragmentée au lendemain d'un effort aussi intense est un signal classique de système nerveux encore sous tension, pas un accident isolé.\n\nLa Body Battery gagne quand même +54 points dans la nuit, ce qui signifie que la récupération énergétique a fonctionné même si la structure était mauvaise. Ce n'est pas une nuit à zéro — c'est une nuit incomplète.",
-      chart: {
-        type: "stacked_phases",
-        title: "Structure de la nuit du 9 mai",
-        unit: "min",
-        segments: [
-          { label: "Sommeil profond", value: 51,  color: "#1a237e" },
-          { label: "REM",             value: 25,  color: "#7b1fa2" },
-          { label: "Léger",           value: 343, color: "#42a5f5" },
-          { label: "Éveil",           value: 107, color: "#ef9a9a" },
-        ],
-      },
-    },
-    {
-      id: "recovery",
-      title: "Récupération",
-      summary: "Le Training Readiness du jour s'établit à 59/100 — un niveau correct qui masque une tension réelle : le facteur sommeil contribue à hauteur de 0 %, tirant le score vers le bas, tandis que l'HRV (Variabilité de la Fréquence Cardiaque nocturne) et l'historique de stress portent respectivement 93 % et 97 % des signaux positifs.\n\nLe temps de récupération estimé par Garmin dépasse 500 heures — chiffre à ne pas lire au pied de la lettre, mais qui indique que la charge récente est jugée significative par l'algorithme. L'ACWR (ratio charge aiguë / charge chronique) est à 1,0, donc la balance de charge est équilibrée : tu n'es pas en surcharge absolue, mais tu n'as pas non plus de marge pour absorber un effort supplémentaire intense sans dégradation.\n\nLa FC de repos mesurée cette nuit est à 52 bpm, soit un bpm au-dessus de la moyenne sur 14 jours (51 bpm) et loin du pic bas à 47 bpm. L'écart est modeste mais cohérent avec une légère activation résiduelle du système nerveux sympathique après le trail du 8 mai.",
-      chart: {
-        type: "factor_breakdown",
-        title: "Facteurs du Training Readiness — 10 mai",
-        total_label: "Readiness",
-        total_value: 59,
-        factors: [
-          { label: "HRV nocturne",        contribution: 93, color: "#43a047" },
-          { label: "Historique de stress", contribution: 97, color: "#66bb6a" },
-          { label: "Temps de récupération",contribution: 86, color: "#ffa726" },
-          { label: "ACWR",                contribution: 96, color: "#29b6f6" },
-          { label: "Sommeil",             contribution: 0,  color: "#ef5350" },
-        ],
-      },
-    },
-    {
-      id: "hrv",
-      title: "HRV",
-      summary: "L'HRV nocturne de la nuit du 9 mai tombe à 54 ms — soit 12 ms sous le pic de la semaine passée (66 ms, nuit du 8 mai) et juste à la limite basse de la zone équilibrée (53–75 ms sur la fenêtre). Ce n'est pas une chute libre : le signal reste dans sa plage normale, mais il ne grimpe pas.\n\nLa dynamique sur 14 jours est en dents de scie plutôt qu'en tendance franche. Les valeurs basses (44 ms le 2 mai, 48 ms les 26 avril et 6 mai) coïncident systématiquement avec des nuits suivant ou précédant des efforts intenses. Les valeurs hautes (66–68 ms) apparaissent lors des nuits de récupération active. C'est un pattern de réponse saine : le système nerveux réagit à la charge et rebondit.\n\nLa moyenne hebdomadaire HRV est à 58 ms, dans la zone équilibrée. La baseline basse se situe à 53–55 ms selon les jours : la nuit du 9 mai est au ras de ce plancher, pas en-dessous. Le système nerveux a absorbé la charge du trail sans décrocher — mais il n'a pas encore repassé la main.",
-      chart: {
-        type: "sparkline_trend",
-        title: "HRV nocturne — 14 derniers jours",
-        unit: "ms",
-        current_value: 54,
-        dates: ["2026-04-26","2026-04-27","2026-04-28","2026-04-29","2026-04-30","2026-05-01","2026-05-02","2026-05-03","2026-05-04","2026-05-05","2026-05-06","2026-05-07","2026-05-08","2026-05-09"],
-        values: [48, 63, 60, 68, 66, 63, 44, 63, 52, 62, 48, 63, 66, 54],
-        baseline: 58.6,
-      },
-    },
-    {
-      id: "training",
-      title: "Charge d'entraînement",
-      summary: "Le statut d'entraînement du jour est non productif malgré un ACWR équilibré à 1,0 (charge aiguë 368, charge chronique 352). Ce paradoxe s'explique : la charge est bien dosée en volume, mais la qualité de récupération entre les séances n'est pas suffisante pour que le corps en tire un bénéfice adaptatif optimal — la nuit du 9 mai en est le symptôme le plus direct.\n\nLes 6 séances sur 14 jours se lisent en deux blocs. Un premier bloc actif fin avril (28 avril, 30 avril) à charge modérée (FC 142–149 bpm, 6–7 km). Un second bloc plus dense début mai : 15,5 km + 317 D+ le 3 mai, 5,8 km + 228 D+ le 5 mai, et le trail du 8 mai (17,5 km + 573 D+) sans repos complet entre chaque sortie. La sortie du 9 mai à 5,4 km / FC 95 bpm / allure 15 min/km est manifestement une marche ou sortie récupération — une bonne décision.\n\nLa tendance fitness est en légère hausse (+3). La machine progresse, mais elle demande une fenêtre de récupération franche pour consolider les adaptations. La surcharge n'est pas là — la sous-récupération ponctuellement, oui.",
-      chart: {
-        type: "metric_grid",
-        title: "Charge d'entraînement — 14 jours",
-        metrics: [
-          { label: "Charge aiguë",      value: 368, unit: "TRIMP", delta: null },
-          { label: "Charge chronique",  value: 352, unit: "TRIMP", delta: null },
-          { label: "ACWR",              value: 1.0, unit: "",      delta: null },
-          { label: "Tendance fitness",  value: 3,   unit: "",      delta: null },
-          { label: "FC repos (14 j)",   value: 51,  unit: "bpm",   delta: 1   },
-          { label: "Séances (14 j)",    value: 6,   unit: "",      delta: null },
-        ],
-      },
-    },
-    {
-      id: "recommendation",
-      title: "Prescription du jour",
-      summary: "Une sortie courte en zone 2 (Z2) est envisageable : 40 à 50 min, FC plafonnée à 140 bpm, terrain plat, pas de D+. L'objectif est de maintenir le flux sans ajouter de stimulus intense que les nuits récentes n'ont pas les ressources pour absorber.\n\nCondition de repli : si les jambes sont lourdes dès le premier kilomètre ou si la FC monte à 140 bpm à allure Z2 habituelle, tu coupes à 30 min ou tu passes en marche active. Ce n'est pas une capitulation — c'est lire un signal clair.\n\nÀ éviter aujourd'hui : toute séance avec fractions, dénivelé, ou durée supérieure à 60 min. Le système nerveux est juste en dessous de sa zone d'équilibre HRV ; une charge supplémentaire mal dosée risque de repousser la récupération à demain soir au lieu de ce soir.\n\nIndicateur à surveiller ce soir : si l'HRV nocturne de la prochaine nuit repasse au-dessus de 60 ms et que la Body Battery monte de plus de +65, tu peux envisager une sortie plus engagée demain.",
-      chart: null,
-    },
-  ],
-};
-
-function getMockBriefing(_iso: string): ApiResponse | null {
-  return MOCK;
-}
 
 /* ── Status mapping ──────────────────────────────────────── */
 
@@ -507,6 +423,32 @@ function DateCarousel({ selected, onChange }: { selected: string; onChange: (iso
   );
 }
 
+/* ── Loading skeleton ────────────────────────────────────── */
+
+function LoadingSkeleton() {
+  return (
+    <div className="mx-auto w-full max-w-[680px] animate-pulse px-5 py-10 sm:px-8">
+      <div className="mb-4 h-3 w-48 rounded bg-(--color-bg-muted)" />
+      <div className="mb-3 h-8 w-full rounded bg-(--color-bg-muted)" />
+      <div className="mb-2 h-8 w-4/5 rounded bg-(--color-bg-muted)" />
+      <div className="mb-8 h-4 w-2/3 rounded bg-(--color-bg-muted)" />
+      <hr style={{ border: "none", borderTop: "0.5px solid var(--color-border)" }} />
+      {[1, 2, 3].map((i) => (
+        <div key={i} className="mt-12">
+          <div className="mb-5 h-[1px] w-full bg-(--color-bg-muted)" />
+          <div className="mb-5 h-6 w-32 rounded bg-(--color-bg-muted)" />
+          <div className="flex flex-col gap-3">
+            <div className="h-4 w-full rounded bg-(--color-bg-muted)" />
+            <div className="h-4 w-5/6 rounded bg-(--color-bg-muted)" />
+            <div className="h-4 w-4/5 rounded bg-(--color-bg-muted)" />
+          </div>
+          <div className="mt-5 h-40 rounded-(--radius-lg) bg-(--color-bg-muted)" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 /* ── Empty state ─────────────────────────────────────────── */
 
 function EmptyDay() {
@@ -523,7 +465,28 @@ function EmptyDay() {
 
 export default function DailyPage() {
   const [selectedDate, setSelectedDate] = useState(() => toLocalISODate(new Date()));
-  const briefing = getMockBriefing(selectedDate);
+  const [briefing, setBriefing] = useState<ApiResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setLoading(true);
+    setBriefing(null);
+
+    const today = toLocalISODate(new Date());
+    const path = selectedDate === today
+      ? "/webapp/daily-report/"
+      : `/webapp/daily-report/?date=${selectedDate}`;
+
+    apiFetch(path)
+      .then((res) => res.json())
+      .then((data: unknown) => {
+        const isEmpty = !data || typeof data !== "object" || Object.keys(data).length === 0;
+        setBriefing(isEmpty ? null : (data as ApiResponse));
+      })
+      .catch(() => setBriefing(null))
+      .finally(() => setLoading(false));
+  }, [selectedDate]);
+
   const status = briefing ? mapStatus(briefing.status) : "warning";
   const fmt = formatDisplay(selectedDate);
 
@@ -532,7 +495,9 @@ export default function DailyPage() {
       <DateCarousel selected={selectedDate} onChange={setSelectedDate} />
 
       <div className="flex-1 overflow-y-auto">
-        {briefing ? (
+        {loading ? (
+          <LoadingSkeleton />
+        ) : briefing ? (
           <div className="mx-auto w-full max-w-[680px] px-5 py-10 sm:px-8">
 
             {/* Editorial header */}
