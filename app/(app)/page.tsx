@@ -135,6 +135,12 @@ function parseRankChange(s: string): number | "new" {
   return parseInt(s, 10);
 }
 
+function fmtPace(sec: number): string {
+  const m = Math.floor(sec / 60);
+  const s = Math.round(sec % 60);
+  return `${m}'${s.toString().padStart(2, "0")}"/km`;
+}
+
 function fmtDurationMin(totalMin: number): string {
   const h = Math.floor(totalMin / 60);
   const m = Math.round(totalMin % 60);
@@ -262,7 +268,7 @@ function HomepageContent({ data }: { data: HomepageData }) {
     ? [
         { value: `${lastActivity.distance_km.toFixed(1)} km`, label: "Distance" },
         { value: lastActivity.duration_label, label: "Durée" },
-        { value: lastActivity.pace_label, label: "Allure moy." },
+        { value: fmtPace(lastActivity.pace_seconds_per_km), label: "Allure moy." },
         { value: `${lastActivity.avg_heart_rate_bpm} bpm`, label: "FC moy." },
         { value: `+${lastActivity.elevation_gain_m} m`, label: "Dénivelé +" },
       ]
