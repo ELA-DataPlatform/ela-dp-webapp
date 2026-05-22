@@ -14,9 +14,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   return (
-    <div className="flex h-full flex-1 overflow-hidden">
-      {/* Strip permanente */}
-      <div className="flex w-12 shrink-0 flex-col border-r border-(--color-border) bg-(--color-bg-subtle)">
+    <div className="flex flex-1">
+      {/* Strip permanente — fixed pour que window scroll (status bar tap iOS) */}
+      <div className="fixed inset-y-0 left-0 z-10 flex w-12 flex-col border-r border-(--color-border) bg-(--color-bg-subtle)">
         <div className="flex h-12 shrink-0 items-center justify-center border-b border-(--color-border)">
           <button
             onClick={() => setOpen(true)}
@@ -81,8 +81,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <Sidebar onClose={() => setOpen(false)} />
       </div>
 
-      {/* Contenu principal — prend toute la largeur restante */}
-      <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto">
+      {/* Contenu principal — ml-12 pour la strip fixe, window scrolle */}
+      <main className="ml-12 flex min-h-screen min-w-0 flex-1 flex-col">
         {children}
       </main>
     </div>
