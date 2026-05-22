@@ -26,7 +26,7 @@ export default function RootLayout({
   return (
     <html
       lang="fr"
-      className={`${geistSans.variable} ${geistMono.variable} h-full`}
+      className={`${geistSans.variable} ${geistMono.variable}`}
       suppressHydrationWarning
     >
       <head>
@@ -37,7 +37,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="flex h-full overflow-hidden bg-(--color-bg) font-sans text-(--color-fg) antialiased">
+      <body className="bg-(--color-bg) font-sans text-(--color-fg) antialiased">
         <Providers>
           <ThemeProvider>
             <AppShell>{children}</AppShell>
