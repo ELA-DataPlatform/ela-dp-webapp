@@ -175,16 +175,43 @@ function SkeletonCard({ className }: { className?: string }) {
 
 // ─── Page ─────────────────────────────────────────────────────────────────
 
-export default function HomePage() {
-  const [data, setData] = useState<HomepageData | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  const today = new Date().toLocaleDateString("fr-FR", {
+function getFrenchDate(): string {
+  return new Date().toLocaleDateString("fr-FR", {
+    timeZone: "Europe/Paris",
     weekday: "long",
     day: "numeric",
     month: "long",
     year: "numeric",
   });
+}
+
+export default function HomePage() {
+  const [data, setData] = useState<HomepageData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [today, setToday] = useState("");
+
+  useEffect(() => {
+    setToday(getFrenchDate());
+
+    // Recalcule à minuit heure de Paris
+    function msUntilMidnightParis(): number {
+      const now = new Date();
+      const paris = new Date(now.toLocaleString("en-US", { timeZone: "Europe/Paris" }));
+      const midnight = new Date(paris);
+      midnight.setHours(24, 0, 0, 0);
+      return midnight.getTime() - paris.getTime();
+    }
+
+    let timeout: ReturnType<typeof setTimeout>;
+    function scheduleMidnight() {
+      timeout = setTimeout(() => {
+        setToday(getFrenchDate());
+        scheduleMidnight();
+      }, msUntilMidnightParis());
+    }
+    scheduleMidnight();
+    return () => clearTimeout(timeout);
+  }, []);
 
   useEffect(() => {
     apiFetch("/webapp/homepage")
