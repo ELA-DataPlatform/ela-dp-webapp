@@ -224,6 +224,9 @@ const PHOENIX: ArtistData = {
   ],
 };
 
+// Somme mock du temps d'écoute cumulé sur l'ensemble des artistes (~500 artistes, distribution puissance)
+const TOTAL_LISTENING_MINUTES = 200_000;
+
 const ARTIST_MAP: Record<string, ArtistData> = {
   "radiohead":   RADIOHEAD,
   "daft-punk":   DAFT_PUNK,
@@ -370,49 +373,65 @@ const HEAT_CLASS = [
   "bg-(--color-fg)",
 ];
 
+const HEATMAP_GAP = 2;
+const HEATMAP_YLABEL_W = 12;
+const HEATMAP_YLABEL_GAP = 8;
+
 function Heatmap({ data }: { data: DayPoint[] }) {
   const max = useMemo(() => Math.max(...data.map(d => d.minutes), 1), [data]);
   const { weeks, monthPositions } = useMemo(() => buildHeatmapGrid(data), [data]);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const [cell, setCell] = useState(11);
 
-  const CELL = 11;
-  const GAP = 3;
+  useEffect(() => {
+    const el = wrapperRef.current;
+    if (!el) return;
+    const N = weeks.length;
+    const compute = (w: number) => {
+      const avail = w - HEATMAP_YLABEL_W - HEATMAP_YLABEL_GAP;
+      setCell(Math.max(6, Math.floor((avail - HEATMAP_GAP * (N - 1)) / N)));
+    };
+    const ro = new ResizeObserver(([e]) => compute(e.contentRect.width));
+    ro.observe(el);
+    compute(el.offsetWidth);
+    return () => ro.disconnect();
+  }, [weeks.length]);
 
   return (
-    <div className="scrollbar-none overflow-x-auto pb-1">
-      <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
-        <div style={{ display: "flex", flexDirection: "column", width: 10, flexShrink: 0, marginTop: 18, gap: GAP }}>
+    <div ref={wrapperRef} className="overflow-x-auto pb-1">
+      <div className="flex items-start" style={{ gap: HEATMAP_YLABEL_GAP }}>
+        {/* Y labels — outside the grid, taille synchronisée avec cell */}
+        <div style={{ display: "flex", flexDirection: "column", width: HEATMAP_YLABEL_W, flexShrink: 0, marginTop: 18, gap: HEATMAP_GAP }}>
           {["L", "M", "M", "J", "V", "S", "D"].map((label, i) => (
-            <div key={i} style={{ height: CELL, lineHeight: `${CELL}px` }}
+            <div key={i} style={{ height: cell, lineHeight: `${cell}px` }}
               className="text-right text-[8px] text-(--color-fg-subtle)">
-              {i % 2 === 0 ? label : ""}
+              {label}
             </div>
           ))}
         </div>
 
-        <div>
+        {/* Grid + month labels */}
+        <div style={{ flex: 1 }}>
           <div style={{ position: "relative", height: 16, marginBottom: 2 }}>
             {monthPositions.map(({ month, col }) => (
               <span key={`${month}-${col}`}
-                style={{ position: "absolute", left: col * (CELL + GAP) }}
+                style={{ position: "absolute", left: col * (cell + HEATMAP_GAP) }}
                 className="text-[9px] text-(--color-fg-subtle)">
                 {month}
               </span>
             ))}
           </div>
-
           <div style={{
             display: "grid",
-            gridTemplateColumns: `repeat(${weeks.length}, ${CELL}px)`,
-            gridTemplateRows: `repeat(7, ${CELL}px)`,
+            gridTemplateColumns: `repeat(${weeks.length}, ${cell}px)`,
+            gridTemplateRows: `repeat(7, ${cell}px)`,
             gridAutoFlow: "column",
-            gap: GAP,
+            gap: HEATMAP_GAP,
           }}>
             {weeks.flatMap((week, wi) =>
               week.map((day, di) => {
                 const key = `${wi}-${di}`;
-                if (day === null) {
-                  return <div key={key} style={{ width: CELL, height: CELL }} />;
-                }
+                if (day === null) return <div key={key} style={{ width: cell, height: cell }} />;
                 const dateLabel = new Date(day.date + "T12:00").toLocaleDateString("fr-FR", {
                   day: "numeric", month: "short", year: "numeric",
                 });
@@ -420,22 +439,13 @@ function Heatmap({ data }: { data: DayPoint[] }) {
                 return (
                   <div key={key} title={title}
                     className={cn("cursor-default rounded-[2px]", HEAT_CLASS[heatmapLevel(day.minutes, max)])}
-                    style={{ width: CELL, height: CELL }}
+                    style={{ width: cell, height: cell }}
                   />
                 );
               })
             )}
           </div>
         </div>
-      </div>
-
-      {/* Legend */}
-      <div className="mt-3 flex items-center gap-1.5 pl-5">
-        <span className="text-[9px] text-(--color-fg-subtle)">Moins</span>
-        {HEAT_CLASS.map((c, i) => (
-          <span key={i} className={cn("rounded-[2px]", c)} style={{ width: CELL, height: CELL }} />
-        ))}
-        <span className="text-[9px] text-(--color-fg-subtle)">Plus</span>
       </div>
     </div>
   );
@@ -459,7 +469,7 @@ function WeeklyCurve({ data }: { data: WeekPoint[] }) {
 
   return (
     <ResponsiveContainer width="100%" height="100%">
-      <AreaChart data={chartData} margin={{ top: 6, right: 6, left: -16, bottom: 0 }}>
+      <AreaChart data={chartData} margin={{ top: 6, right: 6, left: 0, bottom: 0 }}>
         <CartesianGrid strokeDasharray="2 4" stroke="var(--color-border)" vertical={false} />
         <XAxis
           dataKey="label"
@@ -468,8 +478,8 @@ function WeeklyCurve({ data }: { data: WeekPoint[] }) {
         />
         <YAxis
           tick={{ fontSize: 9, fill: "var(--color-fg-subtle)", fontFamily: "var(--font-mono)" }}
-          axisLine={false} tickLine={false} width={32}
-          tickFormatter={(v: number) => (v >= 60 ? `${Math.round(v / 60)}h` : `${v}`)}
+          axisLine={false} tickLine={false} width={28}
+          tickFormatter={(v: number) => (v >= 60 ? `${Math.round(v / 60)}h` : `${v}m`)}
         />
         <Tooltip
           cursor={{ stroke: "var(--color-border-strong)", strokeWidth: 1, strokeDasharray: "3 3" }}
@@ -505,7 +515,6 @@ function HeroCard({ artist }: { artist: ArtistData }) {
   const initials = artist.name.split(/\s+/).slice(0, 2).map(w => w[0]).join("").toUpperCase();
   const studio = artist.albums.filter(a => a.isStudio);
   const completeStudio = studio.filter(a => a.listenedTracks >= a.totalTracks).length;
-
   const stats = [
     { label: "Depuis",         value: String(artist.firstListened) },
     { label: "Titres écoutés", value: artist.distinctTracks.toLocaleString("fr-FR") },
@@ -534,7 +543,7 @@ function HeroCard({ artist }: { artist: ArtistData }) {
         </div>
       </div>
 
-      <div className="mt-5 grid grid-cols-2 gap-x-4 gap-y-4 border-t border-(--color-border) pt-4 sm:grid-cols-3 lg:grid-cols-5">
+      <div className="mt-5 grid grid-cols-2 gap-x-4 gap-y-4 border-t border-(--color-border) pt-4 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-5">
         {stats.map(({ label, value }) => (
           <div key={label} className="flex flex-col gap-1">
             <span className="text-[9px] font-medium uppercase tracking-[0.08em] text-(--color-fg-muted)">
@@ -626,9 +635,11 @@ function AlbumGallery({ albums }: { albums: StudioAlbum[] }) {
         </span>
         <span className="font-mono text-2xs tabular-nums text-(--color-fg-subtle)">{studio.length}</span>
       </div>
-      <div className="grid grid-cols-2 gap-4 p-4 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
+      <div className="scrollbar-none flex gap-7 overflow-x-auto p-4">
         {studio.map(album => (
-          <AlbumCard key={album.name} album={album} />
+          <div key={album.name} className="w-32 shrink-0">
+            <AlbumCard album={album} />
+          </div>
         ))}
       </div>
     </div>
@@ -640,12 +651,14 @@ function AlbumGallery({ albums }: { albums: StudioAlbum[] }) {
 function TopRanking({
   title,
   entries,
+  className,
 }: {
   title: string;
   entries: { name: string; sub?: string; time: string; plays: number }[];
+  className?: string;
 }) {
   return (
-    <div className="overflow-hidden rounded-(--radius-md) border border-(--color-border) bg-(--color-bg-elevated)">
+    <div className={cn("overflow-hidden rounded-(--radius-md) border border-(--color-border) bg-(--color-bg-elevated)", className)}>
       <div className="flex items-center justify-between border-b border-(--color-border) bg-(--color-bg-subtle) px-4 py-2.5">
         <span className="text-2xs font-medium uppercase tracking-[0.08em] text-(--color-fg-muted)">{title}</span>
         {entries.length > 0 && (
@@ -680,6 +693,53 @@ function TopRanking({
           </div>
         ))
       )}
+    </div>
+  );
+}
+
+// ── Listening stats card ──────────────────────────────────────────────────────
+
+function ListeningStats({ daily, weekly, className }: { daily: DayPoint[]; weekly: WeekPoint[]; className?: string }) {
+  const activeDays = useMemo(() => daily.filter(d => d.minutes > 0).length, [daily]);
+  const maxDay = useMemo(() => Math.max(...daily.map(d => d.minutes), 0), [daily]);
+  const maxWeek = useMemo(() => Math.max(...weekly.map(w => w.minutes), 0), [weekly]);
+  const streak = useMemo(() => {
+    let max = 0, cur = 0;
+    for (const d of daily) { if (d.minutes > 0) { cur++; max = Math.max(max, cur); } else cur = 0; }
+    return max;
+  }, [daily]);
+  const avgActive = useMemo(() => {
+    const active = daily.filter(d => d.minutes > 0);
+    return active.length ? Math.round(active.reduce((s, d) => s + d.minutes, 0) / active.length) : 0;
+  }, [daily]);
+  const sessionsCount = useMemo(() => daily.filter(d => d.minutes > 0).length, [daily]);
+
+  const cells = [
+    { label: "Jours actifs",    value: String(activeDays),      sub: "sur 365" },
+    { label: "Durée moy./jour", value: fmtDuration(avgActive),  sub: "jours actifs seulement" },
+    { label: "Record journée",  value: fmtDuration(maxDay),     sub: "en une journée" },
+    { label: "Record semaine",  value: fmtDuration(maxWeek),    sub: "en une semaine" },
+    { label: "Série max",       value: `${streak}j`,            sub: "consécutifs" },
+    { label: "Sessions / an",   value: String(sessionsCount),   sub: "jours d'écoute" },
+  ];
+
+  return (
+    <div className={cn("overflow-hidden rounded-(--radius-md) border border-(--color-border) bg-(--color-bg-elevated)", className)}>
+      <div className="flex items-center justify-between border-b border-(--color-border) bg-(--color-bg-subtle) px-4 py-2.5">
+        <span className="text-2xs font-medium uppercase tracking-[0.08em] text-(--color-fg-muted)">
+          Statistiques d'écoute
+        </span>
+        <span className="font-mono text-2xs tabular-nums text-(--color-fg-subtle)">365 j</span>
+      </div>
+      <div className="grid grid-cols-2 gap-px bg-(--color-border) sm:grid-cols-3">
+        {cells.map(({ label, value, sub }) => (
+          <div key={label} className="flex flex-col gap-1 bg-(--color-bg-elevated) p-4">
+            <span className="text-[9px] font-medium uppercase tracking-[0.08em] text-(--color-fg-muted)">{label}</span>
+            <span className="font-mono text-xl font-medium tabular-nums leading-tight text-(--color-fg)">{value}</span>
+            <span className="text-[11px] text-(--color-fg-subtle)">{sub}</span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -804,10 +864,10 @@ export function ArtistView({ artistId }: { artistId: string }) {
     return list;
   }, [artistId, artist.name]);
 
-  const topTracksForRanking = artist.topTracks.map(t => ({
+  const topTracksForRanking = artist.topTracks.slice(0, 10).map(t => ({
     name: t.name, sub: t.album, time: t.time, plays: t.plays,
   }));
-  const topAlbumsForRanking = artist.topAlbums.map(a => ({
+  const topAlbumsForRanking = artist.topAlbums.slice(0, 10).map(a => ({
     name: a.name, sub: String(a.year), time: a.time, plays: a.plays,
   }));
 
@@ -815,7 +875,7 @@ export function ArtistView({ artistId }: { artistId: string }) {
     <div className="flex flex-col">
       {/* Sticky header with selector */}
       <div className="sticky top-0 z-30 border-b border-(--color-border) bg-(--color-bg)">
-        <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+        <div className="flex w-full flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6">
           <div className="flex min-w-0 items-center gap-3">
             <Link
               href="/music"
@@ -835,48 +895,68 @@ export function ArtistView({ artistId }: { artistId: string }) {
         </div>
       </div>
 
-      {/* Page content */}
-      <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-4 px-4 py-4 sm:px-6">
+      {/* Bento grid */}
+      <div className="w-full px-4 py-4 sm:px-6">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
 
-        <HeroCard artist={artist} />
-
-        {/* Weekly listening curve */}
-        <div className="rounded-(--radius-md) border border-(--color-border) bg-(--color-bg-elevated) p-4">
-          <div className="mb-3 flex items-center justify-between">
-            <span className="text-[9px] font-medium uppercase tracking-[0.08em] text-(--color-fg-muted)">
-              Temps d'écoute hebdomadaire
-            </span>
-            <span className="font-mono text-[9px] tabular-nums text-(--color-fg-subtle)">
-              moy. {fmtDuration(weeklyAvg)}/sem · 52 sem.
-            </span>
+          {/* Hero — full width */}
+          <div className="lg:col-span-12">
+            <HeroCard artist={artist} />
           </div>
-          <div className="h-48">
-            <WeeklyCurve data={weekly} />
+
+          {/* Weekly listening curve — left 8 cols */}
+          <div className="lg:col-span-8">
+            <div className="rounded-(--radius-md) border border-(--color-border) bg-(--color-bg-elevated) p-4">
+              <div className="mb-3 flex items-center justify-between">
+                <span className="text-[9px] font-medium uppercase tracking-[0.08em] text-(--color-fg-muted)">
+                  Temps d'écoute hebdomadaire
+                </span>
+                <span className="font-mono text-[9px] tabular-nums text-(--color-fg-subtle)">
+                  moy. {fmtDuration(weeklyAvg)}/sem · 52 sem.
+                </span>
+              </div>
+              <div className="h-48">
+                <WeeklyCurve data={weekly} />
+              </div>
+            </div>
           </div>
-        </div>
 
-        {/* Activity heatmap */}
-        <div className="rounded-(--radius-md) border border-(--color-border) bg-(--color-bg-elevated) p-4">
-          <div className="mb-3 flex items-center justify-between">
-            <span className="text-[9px] font-medium uppercase tracking-[0.08em] text-(--color-fg-muted)">
-              Activité sur 365 jours
-            </span>
-            <span className="font-mono text-[9px] tabular-nums text-(--color-fg-subtle)">
-              {fmtDuration(yearMinutes)}
-            </span>
+          {/* Top Albums — right 4 cols, spans 2 rows */}
+          <div className="lg:col-span-4 lg:row-span-2">
+            <TopRanking title="Top albums" entries={topAlbumsForRanking} className="h-full" />
           </div>
-          <Heatmap data={daily} />
+
+          {/* Activity heatmap — left 8 cols, card shrinks to heatmap width */}
+          <div className="lg:col-span-8">
+            <div className="rounded-(--radius-md) border border-(--color-border) bg-(--color-bg-elevated) p-4">
+              <div className="mb-3 flex items-center gap-6">
+                <span className="text-[9px] font-medium uppercase tracking-[0.08em] text-(--color-fg-muted)">
+                  Activité sur 365 jours
+                </span>
+                <span className="font-mono text-[9px] tabular-nums text-(--color-fg-subtle)">
+                  {fmtDuration(yearMinutes)}
+                </span>
+              </div>
+              <Heatmap data={daily} />
+            </div>
+          </div>
+
+          {/* Album gallery — full width */}
+          <div className="lg:col-span-12">
+            <AlbumGallery albums={artist.albums} />
+          </div>
+
+          {/* Top Tracks — left 6 cols */}
+          <div className="lg:col-span-6">
+            <TopRanking title="Top titres" entries={topTracksForRanking} className="h-full" />
+          </div>
+
+          {/* Listening stats placeholder — right 6 cols */}
+          <div className="lg:col-span-6">
+            <ListeningStats daily={daily} weekly={weekly} className="h-full" />
+          </div>
+
         </div>
-
-        {/* Album gallery */}
-        <AlbumGallery albums={artist.albums} />
-
-        {/* Rankings */}
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-          <TopRanking title="Top titres" entries={topTracksForRanking} />
-          <TopRanking title="Top albums" entries={topAlbumsForRanking} />
-        </div>
-
       </div>
     </div>
   );
