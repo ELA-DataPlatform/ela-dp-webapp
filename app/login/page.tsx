@@ -12,7 +12,7 @@ export default function LoginPage() {
     if (session) router.replace("/")
   }, [session, router])
 
-  if (status === "loading" || session) return null
+  if (session) return null
 
   return (
     <div className="flex h-full min-h-screen flex-col items-center justify-center bg-(--color-bg)">
