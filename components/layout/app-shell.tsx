@@ -13,6 +13,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
 
+  if (pathname === "/login") return <>{children}</>;
+
   return (
     <div className="flex flex-1">
       {/* Strip permanente — fixed pour que window scroll (status bar tap iOS) */}
