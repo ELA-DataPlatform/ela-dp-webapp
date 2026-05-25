@@ -266,7 +266,7 @@ export default function MusicPage() {
             time: fmtMin(a.listening_time_min),
             plays: a.play_count,
             change: computeChange(a.rank, a.rank_previous, a.is_new_entry),
-            href: `/music/artist/${a.artist_id}`,
+            href: `/music/artist?id=${encodeURIComponent(a.artist_id)}`,
           }))
         );
 
