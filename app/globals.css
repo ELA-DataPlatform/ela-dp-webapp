@@ -89,7 +89,7 @@ html, body {
   --color-bg: #0a0a0a;
   --color-bg-subtle: #0f0f0f;                     /* sidebar — opaque, légèrement plus clair que bg */
   --color-bg-muted: rgba(255, 255, 255, 0.04);    /* hover = surface-2 */
-  --color-bg-elevated: rgba(255, 255, 255, 0.02); /* cards = surface translucide */
+  --color-bg-elevated: #141414;                    /* cards, popovers — opaque pour éviter la transparence */
 
   /* Borders */
   --color-border: rgba(255, 255, 255, 0.06);
