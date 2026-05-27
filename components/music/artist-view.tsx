@@ -69,7 +69,10 @@ interface WeekPoint { week: string; minutes: number }
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function hashId(id: string) {
-  return id.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
+  // djb2 — uniform spread across COVER_TONES; charCode sum collided too often.
+  let h = 5381;
+  for (let i = 0; i < id.length; i++) h = ((h << 5) + h) ^ id.charCodeAt(i);
+  return h >>> 0;
 }
 
 function fmtDuration(min: number) {
@@ -222,16 +225,17 @@ const HEATMAP_YLABEL_GAP = 8;
 function Heatmap({ data }: { data: DayPoint[] }) {
   const max = useMemo(() => Math.max(...data.map(d => d.minutes), 1), [data]);
   const { weeks, monthPositions } = useMemo(() => buildHeatmapGrid(data), [data]);
-  const wrapperRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
   const [cell, setCell] = useState(11);
 
   useEffect(() => {
-    const el = wrapperRef.current;
+    const el = scrollRef.current;
     if (!el) return;
     const N = weeks.length;
     const compute = (w: number) => {
-      const avail = w - HEATMAP_YLABEL_W - HEATMAP_YLABEL_GAP;
-      setCell(Math.max(6, Math.floor((avail - HEATMAP_GAP * (N - 1)) / N)));
+      const c = Math.floor((w - HEATMAP_GAP * (N - 1)) / N);
+      // Keep cells readable; if they don't fit, the grid scrolls horizontally instead of shrinking to dust.
+      setCell(Math.max(10, Math.min(14, c)));
     };
     const ro = new ResizeObserver(([e]) => compute(e.contentRect.width));
     ro.observe(el);
@@ -239,26 +243,36 @@ function Heatmap({ data }: { data: DayPoint[] }) {
     return () => ro.disconnect();
   }, [weeks.length]);
 
-  return (
-    <div ref={wrapperRef} className="overflow-x-auto pb-1">
-      <div className="flex items-start" style={{ gap: HEATMAP_YLABEL_GAP }}>
-        {/* Y labels — outside the grid, taille synchronisée avec cell */}
-        <div style={{ display: "flex", flexDirection: "column", width: HEATMAP_YLABEL_W, flexShrink: 0, marginTop: 18, gap: HEATMAP_GAP }}>
-          {["L", "M", "M", "J", "V", "S", "D"].map((label, i) => (
-            <div key={i} style={{ height: cell, lineHeight: `${cell}px` }}
-              className="text-right text-[8px] text-(--color-fg-subtle)">
-              {label}
-            </div>
-          ))}
-        </div>
+  // Land scrolled to the right — today is on the right edge, like GitHub.
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (el) el.scrollLeft = el.scrollWidth;
+  }, [cell, weeks.length]);
 
-        {/* Grid + month labels */}
-        <div style={{ flex: 1 }}>
-          <div style={{ position: "relative", height: 16, marginBottom: 2 }}>
+  const gridWidth = weeks.length * cell + (weeks.length - 1) * HEATMAP_GAP;
+
+  return (
+    <div className="flex items-start gap-2">
+      {/* Day-of-week labels stay outside the scroll container so they remain visible while the grid scrolls. */}
+      <div
+        className="flex shrink-0 flex-col"
+        style={{ width: HEATMAP_YLABEL_W, marginTop: 18, gap: HEATMAP_GAP }}
+      >
+        {["L", "M", "M", "J", "V", "S", "D"].map((label, i) => (
+          <div key={i} style={{ height: cell, lineHeight: `${cell}px` }}
+            className="text-right text-[8px] text-(--color-fg-subtle)">
+            {label}
+          </div>
+        ))}
+      </div>
+
+      <div ref={scrollRef} className="scrollbar-none min-w-0 flex-1 overflow-x-auto pb-1">
+        <div style={{ width: gridWidth }}>
+          <div className="relative mb-0.5 h-4">
             {monthPositions.map(({ month, col }) => (
               <span key={`${month}-${col}`}
                 style={{ position: "absolute", left: col * (cell + HEATMAP_GAP) }}
-                className="text-[9px] text-(--color-fg-subtle)">
+                className="text-[10px] text-(--color-fg-subtle)">
                 {month}
               </span>
             ))}
@@ -280,7 +294,7 @@ function Heatmap({ data }: { data: DayPoint[] }) {
                 const title = day.minutes > 0 ? `${dateLabel} — ${fmtDuration(day.minutes)}` : `${dateLabel} — aucune écoute`;
                 return (
                   <div key={key} title={title}
-                    className={cn("cursor-default rounded-[2px]", HEAT_CLASS[heatmapLevel(day.minutes, max)])}
+                    className={cn("rounded-[2px]", HEAT_CLASS[heatmapLevel(day.minutes, max)])}
                     style={{ width: cell, height: cell }}
                   />
                 );
@@ -315,11 +329,11 @@ function WeeklyCurve({ data }: { data: WeekPoint[] }) {
         <CartesianGrid strokeDasharray="2 4" stroke="var(--color-border)" vertical={false} />
         <XAxis
           dataKey="label"
-          tick={{ fontSize: 9, fill: "var(--color-fg-subtle)", fontFamily: "var(--font-mono)" }}
+          tick={{ fontSize: 10, fill: "var(--color-fg-subtle)", fontFamily: "var(--font-mono)" }}
           axisLine={false} tickLine={false} interval={interval}
         />
         <YAxis
-          tick={{ fontSize: 9, fill: "var(--color-fg-subtle)", fontFamily: "var(--font-mono)" }}
+          tick={{ fontSize: 10, fill: "var(--color-fg-subtle)", fontFamily: "var(--font-mono)" }}
           axisLine={false} tickLine={false} width={28}
           tickFormatter={(v: number) => (v >= 60 ? `${Math.round(v / 60)}h` : `${v}m`)}
         />
@@ -369,7 +383,7 @@ function HeroCard({ artist }: { artist: ArtistData }) {
     <div className="rounded-(--radius-md) border border-(--color-border) bg-(--color-bg-elevated) p-5">
       <div className="flex items-start gap-4">
         {artist.imageUrl ? (
-          <img src={artist.imageUrl} alt={artist.name}
+          <img src={artist.imageUrl} alt={artist.name} loading="lazy"
             className="h-14 w-14 shrink-0 rounded-(--radius-md) object-cover" />
         ) : (
           <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-(--radius-md) bg-(--color-bg-muted) text-xl font-semibold text-(--color-fg)">
@@ -382,7 +396,7 @@ function HeroCard({ artist }: { artist: ArtistData }) {
           </h2>
           <div className="mt-1.5 flex flex-wrap gap-1.5">
             {artist.genres.map(g => (
-              <span key={g} className="inline-flex h-5 items-center rounded-full border border-(--color-border) px-2 text-[10px] font-medium text-(--color-fg-muted)">
+              <span key={g} className="inline-flex h-5 items-center rounded-full border border-(--color-border) px-2 text-2xs font-medium text-(--color-fg-muted)">
                 {g}
               </span>
             ))}
@@ -390,10 +404,10 @@ function HeroCard({ artist }: { artist: ArtistData }) {
         </div>
       </div>
 
-      <div className="mt-5 grid grid-cols-2 gap-x-4 gap-y-4 border-t border-(--color-border) pt-4 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-5">
+      <div className="mt-5 grid grid-cols-3 gap-x-4 gap-y-4 border-t border-(--color-border) pt-4 sm:grid-cols-5">
         {stats.map(({ label, value }) => (
           <div key={label} className="flex flex-col gap-1">
-            <span className="text-[9px] font-medium uppercase tracking-[0.08em] text-(--color-fg-muted)">
+            <span className="text-2xs font-medium uppercase tracking-[0.08em] text-(--color-fg-muted)">
               {label}
             </span>
             <span className="font-mono text-xl font-medium tabular-nums leading-tight text-(--color-fg)">
@@ -434,7 +448,7 @@ function AlbumCard({ album }: { album: StudioAlbum }) {
         style={{ background: tone.bg }}
       >
         {album.imageUrl ? (
-          <img src={album.imageUrl} alt={album.name} className="absolute inset-0 h-full w-full object-cover" />
+          <img src={album.imageUrl} alt={album.name} loading="lazy" className="absolute inset-0 h-full w-full object-cover" />
         ) : (
           <span className="absolute inset-0 flex items-center justify-center font-mono text-2xl font-medium" style={{ color: tone.fg }}>
             {coverInitials(album.name)}
@@ -536,7 +550,7 @@ function TopRanking({
             </div>
             <div className="shrink-0 text-right">
               <div className="font-mono text-xs font-medium tabular-nums text-(--color-fg)">{entry.time}</div>
-              <div className="font-mono text-[11px] tabular-nums text-(--color-fg-subtle)">{entry.plays}×</div>
+              <div className="font-mono text-2xs tabular-nums text-(--color-fg-subtle)">{entry.plays}×</div>
             </div>
           </div>
         ))
@@ -560,7 +574,10 @@ function ListeningStats({ daily, weekly, className }: { daily: DayPoint[]; weekl
     const active = daily.filter(d => d.minutes > 0);
     return active.length ? Math.round(active.reduce((s, d) => s + d.minutes, 0) / active.length) : 0;
   }, [daily]);
-  const sessionsCount = useMemo(() => daily.filter(d => d.minutes > 0).length, [daily]);
+  const weeklyAvg = useMemo(() => {
+    const total = daily.reduce((s, d) => s + d.minutes, 0);
+    return Math.round(total / 52);
+  }, [daily]);
 
   const cells = [
     { label: "Jours actifs",    value: String(activeDays),      sub: "sur 365" },
@@ -568,7 +585,7 @@ function ListeningStats({ daily, weekly, className }: { daily: DayPoint[]; weekl
     { label: "Record journée",  value: fmtDuration(maxDay),     sub: "en une journée" },
     { label: "Record semaine",  value: fmtDuration(maxWeek),    sub: "en une semaine" },
     { label: "Série max",       value: `${streak}j`,            sub: "consécutifs" },
-    { label: "Sessions / an",   value: String(sessionsCount),   sub: "jours d'écoute" },
+    { label: "Moy. hebdo",      value: fmtDuration(weeklyAvg),  sub: "sur 52 semaines" },
   ];
 
   return (
@@ -582,9 +599,9 @@ function ListeningStats({ daily, weekly, className }: { daily: DayPoint[]; weekl
       <div className="grid grid-cols-2 gap-px bg-(--color-border) sm:grid-cols-3">
         {cells.map(({ label, value, sub }) => (
           <div key={label} className="flex flex-col gap-1 bg-(--color-bg-elevated) p-4">
-            <span className="text-[9px] font-medium uppercase tracking-[0.08em] text-(--color-fg-muted)">{label}</span>
+            <span className="text-2xs font-medium uppercase tracking-[0.08em] text-(--color-fg-muted)">{label}</span>
             <span className="font-mono text-xl font-medium tabular-nums leading-tight text-(--color-fg)">{value}</span>
-            <span className="text-[11px] text-(--color-fg-subtle)">{sub}</span>
+            <span className="text-2xs text-(--color-fg-subtle)">{sub}</span>
           </div>
         ))}
       </div>
@@ -705,12 +722,12 @@ function BentoSkeleton() {
     <div className="p-4">
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
         <Sk className="h-[168px] lg:col-span-12" />
-        <Sk className="h-[292px] lg:col-span-8" />
-        <Sk className="h-[600px] lg:col-span-4 lg:row-span-2" />
-        <Sk className="h-[292px] lg:col-span-8" />
+        <Sk className="h-[276px] lg:col-span-8 lg:h-[292px]" />
+        <Sk className="h-[400px] lg:col-span-4 lg:row-span-2 lg:h-[600px]" />
+        <Sk className="h-[200px] lg:col-span-8 lg:h-[292px]" />
         <Sk className="h-[216px] lg:col-span-12" />
         <Sk className="h-[600px] lg:col-span-6" />
-        <Sk className="h-[600px] lg:col-span-6" />
+        <Sk className="h-[400px] lg:col-span-6 lg:h-[600px]" />
       </div>
     </div>
   );
@@ -752,7 +769,9 @@ export function ArtistView({ artistId }: { artistId?: string }) {
 
   const weekly = useMemo(() => weeklyFromDaily(daily), [daily]);
   const yearMinutes = useMemo(() => daily.reduce((s, d) => s + d.minutes, 0), [daily]);
-  const weeklyAvg = weekly.length ? Math.round(yearMinutes / weekly.length) : 0;
+  // 365 days = 52.14 weeks; divide by 52 to read as "minutes par semaine moyenne"
+  // (weekly.length renvoie 53 buckets — biaiserait la moyenne à la baisse).
+  const weeklyAvg = Math.round(yearMinutes / 52);
 
   const topTracksForRanking = useMemo(() => (artist?.topTracks ?? []).map(t => ({
     name: t.name, sub: t.album, time: t.time, plays: t.plays,
@@ -779,7 +798,14 @@ export function ArtistView({ artistId }: { artistId?: string }) {
       </div>
 
       {!artistId ? (
-        <BentoSkeleton />
+        <div className="flex flex-1 items-center justify-center py-24">
+          <div className="max-w-xs space-y-2 text-center">
+            <p className="text-sm font-medium text-(--color-fg)">Choisis un artiste</p>
+            <p className="text-sm text-(--color-fg-subtle)">
+              Utilise le sélecteur ci-dessus pour ouvrir le focus d'un artiste.
+            </p>
+          </div>
+        </div>
       ) : error ? (
         <div className="flex flex-1 items-center justify-center py-24 text-sm text-(--color-fg-subtle)">
           Impossible de charger les données de cet artiste.
@@ -797,12 +823,12 @@ export function ArtistView({ artistId }: { artistId?: string }) {
             </div>
 
             {/* Weekly listening curve — left 8 cols */}
-            <div className="h-[292px] rounded-(--radius-md) border border-(--color-border) bg-(--color-bg-elevated) p-4 lg:col-span-8">
+            <div className="rounded-(--radius-md) border border-(--color-border) bg-(--color-bg-elevated) p-4 lg:col-span-8 lg:h-[292px]">
               <div className="mb-3 flex items-center justify-between">
-                <span className="text-[9px] font-medium uppercase tracking-[0.08em] text-(--color-fg-muted)">
+                <span className="text-2xs font-medium uppercase tracking-[0.08em] text-(--color-fg-muted)">
                   Temps d'écoute hebdomadaire
                 </span>
-                <span className="font-mono text-[9px] tabular-nums text-(--color-fg-subtle)">
+                <span className="font-mono text-2xs tabular-nums text-(--color-fg-subtle)">
                   moy. {fmtDuration(weeklyAvg)}/sem · 52 sem.
                 </span>
               </div>
@@ -812,17 +838,17 @@ export function ArtistView({ artistId }: { artistId?: string }) {
             </div>
 
             {/* Top Albums — right 4 cols, spans 2 rows */}
-            <div className="h-[600px] lg:col-span-4 lg:row-span-2">
+            <div className="lg:col-span-4 lg:row-span-2 lg:h-[600px]">
               <TopRanking title="Top albums" entries={topAlbumsForRanking} />
             </div>
 
             {/* Activity heatmap — left 8 cols */}
-            <div className="h-[292px] rounded-(--radius-md) border border-(--color-border) bg-(--color-bg-elevated) p-4 lg:col-span-8">
+            <div className="rounded-(--radius-md) border border-(--color-border) bg-(--color-bg-elevated) p-4 lg:col-span-8 lg:h-[292px]">
               <div className="mb-3 flex items-center gap-6">
-                <span className="text-[9px] font-medium uppercase tracking-[0.08em] text-(--color-fg-muted)">
+                <span className="text-2xs font-medium uppercase tracking-[0.08em] text-(--color-fg-muted)">
                   Activité sur 365 jours
                 </span>
-                <span className="font-mono text-[9px] tabular-nums text-(--color-fg-subtle)">
+                <span className="font-mono text-2xs tabular-nums text-(--color-fg-subtle)">
                   {fmtDuration(yearMinutes)}
                 </span>
               </div>
