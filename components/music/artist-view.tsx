@@ -222,16 +222,17 @@ const HEATMAP_YLABEL_GAP = 8;
 function Heatmap({ data }: { data: DayPoint[] }) {
   const max = useMemo(() => Math.max(...data.map(d => d.minutes), 1), [data]);
   const { weeks, monthPositions } = useMemo(() => buildHeatmapGrid(data), [data]);
-  const wrapperRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
   const [cell, setCell] = useState(11);
 
   useEffect(() => {
-    const el = wrapperRef.current;
+    const el = scrollRef.current;
     if (!el) return;
     const N = weeks.length;
     const compute = (w: number) => {
-      const avail = w - HEATMAP_YLABEL_W - HEATMAP_YLABEL_GAP;
-      setCell(Math.max(6, Math.floor((avail - HEATMAP_GAP * (N - 1)) / N)));
+      const c = Math.floor((w - HEATMAP_GAP * (N - 1)) / N);
+      // Keep cells readable; if they don't fit, the grid scrolls horizontally instead of shrinking to dust.
+      setCell(Math.max(10, Math.min(14, c)));
     };
     const ro = new ResizeObserver(([e]) => compute(e.contentRect.width));
     ro.observe(el);
@@ -239,21 +240,28 @@ function Heatmap({ data }: { data: DayPoint[] }) {
     return () => ro.disconnect();
   }, [weeks.length]);
 
-  return (
-    <div ref={wrapperRef} className="overflow-x-auto pb-1">
-      <div className="flex items-start" style={{ gap: HEATMAP_YLABEL_GAP }}>
-        {/* Y labels — outside the grid, taille synchronisée avec cell */}
-        <div style={{ display: "flex", flexDirection: "column", width: HEATMAP_YLABEL_W, flexShrink: 0, marginTop: 18, gap: HEATMAP_GAP }}>
-          {["L", "M", "M", "J", "V", "S", "D"].map((label, i) => (
-            <div key={i} style={{ height: cell, lineHeight: `${cell}px` }}
-              className="text-right text-[8px] text-(--color-fg-subtle)">
-              {label}
-            </div>
-          ))}
-        </div>
+  // Land scrolled to the right — today is on the right edge, like GitHub.
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (el) el.scrollLeft = el.scrollWidth;
+  }, [cell, weeks.length]);
 
-        {/* Grid + month labels */}
-        <div style={{ flex: 1 }}>
+  const gridWidth = weeks.length * cell + (weeks.length - 1) * HEATMAP_GAP;
+
+  return (
+    <div className="flex items-start" style={{ gap: HEATMAP_YLABEL_GAP }}>
+      {/* Day-of-week labels stay outside the scroll container so they remain visible while the grid scrolls. */}
+      <div style={{ display: "flex", flexDirection: "column", width: HEATMAP_YLABEL_W, flexShrink: 0, marginTop: 18, gap: HEATMAP_GAP }}>
+        {["L", "M", "M", "J", "V", "S", "D"].map((label, i) => (
+          <div key={i} style={{ height: cell, lineHeight: `${cell}px` }}
+            className="text-right text-[8px] text-(--color-fg-subtle)">
+            {label}
+          </div>
+        ))}
+      </div>
+
+      <div ref={scrollRef} className="scrollbar-none min-w-0 flex-1 overflow-x-auto pb-1">
+        <div style={{ width: gridWidth }}>
           <div style={{ position: "relative", height: 16, marginBottom: 2 }}>
             {monthPositions.map(({ month, col }) => (
               <span key={`${month}-${col}`}
@@ -280,7 +288,7 @@ function Heatmap({ data }: { data: DayPoint[] }) {
                 const title = day.minutes > 0 ? `${dateLabel} — ${fmtDuration(day.minutes)}` : `${dateLabel} — aucune écoute`;
                 return (
                   <div key={key} title={title}
-                    className={cn("cursor-default rounded-[2px]", HEAT_CLASS[heatmapLevel(day.minutes, max)])}
+                    className={cn("rounded-[2px]", HEAT_CLASS[heatmapLevel(day.minutes, max)])}
                     style={{ width: cell, height: cell }}
                   />
                 );
@@ -817,7 +825,7 @@ export function ArtistView({ artistId }: { artistId?: string }) {
             </div>
 
             {/* Activity heatmap — left 8 cols */}
-            <div className="h-[292px] rounded-(--radius-md) border border-(--color-border) bg-(--color-bg-elevated) p-4 lg:col-span-8">
+            <div className="rounded-(--radius-md) border border-(--color-border) bg-(--color-bg-elevated) p-4 lg:col-span-8 lg:h-[292px]">
               <div className="mb-3 flex items-center gap-6">
                 <span className="text-[9px] font-medium uppercase tracking-[0.08em] text-(--color-fg-muted)">
                   Activité sur 365 jours
