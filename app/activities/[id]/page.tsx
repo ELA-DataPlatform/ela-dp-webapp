@@ -9,8 +9,7 @@ import { SecondaryKpis } from "@/components/activity/secondary-kpis";
 import { ActivityChart } from "@/components/activity/chart";
 import { SplitsTable } from "@/components/activity/splits-table";
 import { HRZonesPanel } from "@/components/activity/hr-zones";
-import { PaceDistribution } from "@/components/activity/pace-distribution";
-import { HistoryPanel } from "@/components/activity/history";
+import { RecentActivitiesPanel } from "@/components/activity/recent-activities";
 import { MusicTimeline } from "@/components/activity/music-timeline";
 import { VerdictPanel } from "@/components/activity/verdict";
 import { MOCK_ACTIVITY, MOCK_VERDICT } from "@/components/activity/mock-data";
@@ -33,14 +32,9 @@ export default function ActivityDetailPage() {
 
           <div className="grid gap-4 lg:grid-cols-2">
             <HRZonesPanel zones={activity.hrZones} totalSec={activity.durationSec} />
-            <PaceDistribution
-              buckets={activity.paceDistribution}
-              totalKm={activity.distanceKm}
-              avgPaceSec={activity.paceSecPerKm}
-            />
+            <RecentActivitiesPanel activities={activity.history} />
           </div>
 
-          <HistoryPanel activity={activity} />
           <MusicTimeline tracks={activity.tracks} />
           <VerdictPanel verdict={MOCK_VERDICT} />
         </div>
