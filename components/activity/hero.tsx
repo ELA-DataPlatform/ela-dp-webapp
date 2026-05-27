@@ -1,14 +1,13 @@
 import { cn } from "@/lib/utils";
 import { Card } from "./card";
 import { RouteMap } from "./route-map";
-import { fmtDelta, fmtDurationHm, fmtPace, type DeltaTone } from "./utils";
+import { fmtDurationHm, fmtPace } from "./utils";
 import type { ActivityDetail } from "./mock-data";
 
 interface KpiSpec {
   label: string;
   value: string;
   unit?: string;
-  delta?: { label: string; tone: DeltaTone };
 }
 
 function HeroKpi({ kpi, className }: { kpi: KpiSpec; className?: string }) {
@@ -17,25 +16,11 @@ function HeroKpi({ kpi, className }: { kpi: KpiSpec; className?: string }) {
       <span className="text-2xs font-medium uppercase tracking-[0.08em] text-(--color-fg-muted)">
         {kpi.label}
       </span>
-      <div className="flex flex-col gap-1">
-        <div className="flex items-baseline gap-1">
-          <span className="font-mono text-2xl font-medium tabular-nums leading-tight text-(--color-fg) sm:text-[1.75rem]">
-            {kpi.value}
-          </span>
-          {kpi.unit && <span className="text-sm text-(--color-fg-muted)">{kpi.unit}</span>}
-        </div>
-        {kpi.delta && (
-          <span
-            className={cn(
-              "font-mono text-2xs tabular-nums",
-              kpi.delta.tone === "success" && "text-(--color-success)",
-              kpi.delta.tone === "danger" && "text-(--color-danger)",
-              kpi.delta.tone === "neutral" && "text-(--color-fg-subtle)"
-            )}
-          >
-            {kpi.delta.label} vs 30 j
-          </span>
-        )}
+      <div className="flex items-baseline gap-1">
+        <span className="font-mono text-2xl font-medium tabular-nums leading-tight text-(--color-fg) sm:text-[1.75rem]">
+          {kpi.value}
+        </span>
+        {kpi.unit && <span className="text-sm text-(--color-fg-muted)">{kpi.unit}</span>}
       </div>
     </div>
   );
@@ -43,25 +28,10 @@ function HeroKpi({ kpi, className }: { kpi: KpiSpec; className?: string }) {
 
 export function Hero({ activity }: { activity: ActivityDetail }) {
   const kpis: KpiSpec[] = [
-    {
-      label: "Distance",
-      value: activity.distanceKm.toFixed(2),
-      unit: "km",
-      delta: fmtDelta(activity.deltas.distancePct, { suffix: " %", betterWhen: "higher" }),
-    },
-    { label: "Durée", value: fmtDurationHm(activity.durationSec) },
-    {
-      label: "Allure moy.",
-      value: fmtPace(activity.paceSecPerKm),
-      unit: "/km",
-      delta: fmtDelta(activity.deltas.paceSec, { suffix: " s", betterWhen: "lower" }),
-    },
-    {
-      label: "FC moy.",
-      value: `${activity.avgHrBpm}`,
-      unit: "bpm",
-      delta: fmtDelta(activity.deltas.hrBpm, { suffix: " bpm", betterWhen: "lower" }),
-    },
+    { label: "Distance",    value: activity.distanceKm.toFixed(2),   unit: "km"  },
+    { label: "Durée",       value: fmtDurationHm(activity.durationSec)            },
+    { label: "Allure moy.", value: fmtPace(activity.paceSecPerKm),   unit: "/km" },
+    { label: "FC moy.",     value: `${activity.avgHrBpm}`,           unit: "bpm" },
   ];
 
   return (

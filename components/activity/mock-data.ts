@@ -16,6 +16,21 @@ export interface Lap {
   elevGainM: number;
 }
 
+export type SegmentKind = "warmup" | "interval" | "recovery" | "cooldown";
+
+export interface Segment {
+  id: number;
+  kind: SegmentKind;
+  name: string;
+  startKm: number;
+  endKm: number;
+  distanceKm: number;
+  durationSec: number;
+  avgPaceSec: number;
+  avgHrBpm: number;
+  avgCadenceSpm: number;
+}
+
 export interface Track {
   startAtKm: number;
   durationSec: number;
@@ -32,14 +47,6 @@ export interface HRZone {
   minBpm: number;
   maxBpm: number;
   timeSec: number;
-}
-
-export interface PaceBucket {
-  /** Pace bound (sec/km) — inclusive lower */
-  minPaceSec: number;
-  /** Pace bound (sec/km) — exclusive upper */
-  maxPaceSec: number;
-  distKm: number;
 }
 
 export interface HistoricalActivity {
@@ -87,9 +94,9 @@ export interface ActivityDetail {
   coordinates: [number, number][];
   chartData: ChartPoint[];
   laps: Lap[];
+  segments: Segment[];
   tracks: Track[];
   hrZones: HRZone[];
-  paceDistribution: PaceBucket[];
   history: HistoricalActivity[];
   conditions: ActivityConditions;
   deltas: {
@@ -136,6 +143,19 @@ function generateChartData(): ChartPoint[] {
 
 const CHART_DATA = generateChartData();
 
+// Segments d'une séance type fractionné : échauffement + 4×(1km tempo / 0,5km récup) + retour calme
+const SEGMENTS: Segment[] = [
+  { id: 1, kind: "warmup",   name: "Échauffement",    startKm: 0.0,  endKm: 3.0,  distanceKm: 3.0, durationSec: 990, avgPaceSec: 330, avgHrBpm: 138, avgCadenceSpm: 172 },
+  { id: 2, kind: "interval", name: "Intervalle 1",    startKm: 3.0,  endKm: 4.0,  distanceKm: 1.0, durationSec: 255, avgPaceSec: 255, avgHrBpm: 168, avgCadenceSpm: 182 },
+  { id: 3, kind: "recovery", name: "Récup 1",         startKm: 4.0,  endKm: 4.5,  distanceKm: 0.5, durationSec: 173, avgPaceSec: 346, avgHrBpm: 142, avgCadenceSpm: 172 },
+  { id: 4, kind: "interval", name: "Intervalle 2",    startKm: 4.5,  endKm: 5.5,  distanceKm: 1.0, durationSec: 258, avgPaceSec: 258, avgHrBpm: 171, avgCadenceSpm: 183 },
+  { id: 5, kind: "recovery", name: "Récup 2",         startKm: 5.5,  endKm: 6.0,  distanceKm: 0.5, durationSec: 175, avgPaceSec: 350, avgHrBpm: 144, avgCadenceSpm: 173 },
+  { id: 6, kind: "interval", name: "Intervalle 3",    startKm: 6.0,  endKm: 7.0,  distanceKm: 1.0, durationSec: 261, avgPaceSec: 261, avgHrBpm: 172, avgCadenceSpm: 184 },
+  { id: 7, kind: "recovery", name: "Récup 3",         startKm: 7.0,  endKm: 7.5,  distanceKm: 0.5, durationSec: 180, avgPaceSec: 360, avgHrBpm: 145, avgCadenceSpm: 173 },
+  { id: 8, kind: "interval", name: "Intervalle 4",    startKm: 7.5,  endKm: 8.5,  distanceKm: 1.0, durationSec: 264, avgPaceSec: 264, avgHrBpm: 174, avgCadenceSpm: 184 },
+  { id: 9, kind: "cooldown", name: "Retour au calme", startKm: 8.5,  endKm: 12.4, distanceKm: 3.9, durationSec: 1188, avgPaceSec: 305, avgHrBpm: 134, avgCadenceSpm: 170 },
+];
+
 const LAPS: Lap[] = [
   { km: 1,  paceSecPerKm: 322, gapSecPerKm: 318, hrBpm: 142, cadenceSpm: 172, elevGainM: 9   },
   { km: 2,  paceSecPerKm: 316, gapSecPerKm: 312, hrBpm: 148, cadenceSpm: 174, elevGainM: 13  },
@@ -169,15 +189,6 @@ const HR_ZONES: HRZone[] = [
   { zone: 5, label: "VO2max",    minBpm: 171, maxBpm: 180, timeSec: 180  },
 ];
 
-const PACE_DISTRIBUTION: PaceBucket[] = [
-  { minPaceSec: 270, maxPaceSec: 285, distKm: 0.4 },
-  { minPaceSec: 285, maxPaceSec: 300, distKm: 1.8 },
-  { minPaceSec: 300, maxPaceSec: 315, distKm: 5.6 },
-  { minPaceSec: 315, maxPaceSec: 330, distKm: 3.2 },
-  { minPaceSec: 330, maxPaceSec: 345, distKm: 1.1 },
-  { minPaceSec: 345, maxPaceSec: 360, distKm: 0.3 },
-];
-
 const HISTORY: HistoricalActivity[] = [
   { id: 99, dateDisplay: "21 avr.", distanceKm: 12.5, durationSec: 3960, avgPaceSec: 317, avgHrBpm: 156 },
   { id: 98, dateDisplay: "14 avr.", distanceKm: 12.2, durationSec: 3744, avgPaceSec: 307, avgHrBpm: 154 },
@@ -188,7 +199,7 @@ const HISTORY: HistoricalActivity[] = [
 
 export const MOCK_ACTIVITY: ActivityDetail = {
   id: 1,
-  title: "Sortie longue — Vannes",
+  title: "Fractionné — Vannes",
   type: "run",
   typeLabel: "Course",
   dateDisplay: "Lundi 28 avril 2026",
@@ -209,9 +220,9 @@ export const MOCK_ACTIVITY: ActivityDetail = {
   coordinates: GPS_TRACE,
   chartData: CHART_DATA,
   laps: LAPS,
+  segments: SEGMENTS,
   tracks: TRACKS,
   hrZones: HR_ZONES,
-  paceDistribution: PACE_DISTRIBUTION,
   history: HISTORY,
   conditions: {
     tempC: 11,
