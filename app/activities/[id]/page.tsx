@@ -5,7 +5,6 @@ import { ActivityFocusProvider } from "@/components/activity/focus-context";
 import { ActivityHeader } from "@/components/activity/header";
 import { ConditionsStrip } from "@/components/activity/conditions-strip";
 import { Hero } from "@/components/activity/hero";
-import { SecondaryKpis } from "@/components/activity/secondary-kpis";
 import { ActivityChart } from "@/components/activity/chart";
 import { SplitsTable } from "@/components/activity/splits-table";
 import { HRZonesPanel } from "@/components/activity/hr-zones";
@@ -26,8 +25,7 @@ export default function ActivityDetailPage() {
 
         <div className="flex flex-col gap-4 p-4 sm:p-5">
           <Hero activity={activity} />
-          <SecondaryKpis activity={activity} />
-          <ActivityChart data={activity.chartData} totalKm={activity.distanceKm} />
+          <ActivityChart data={activity.chartData} totalKm={activity.distanceKm} segments={activity.segments} />
           <SplitsTable activity={activity} />
 
           <div className="grid gap-4 lg:grid-cols-2">

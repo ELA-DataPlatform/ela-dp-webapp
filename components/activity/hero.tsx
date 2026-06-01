@@ -28,10 +28,16 @@ function HeroKpi({ kpi, className }: { kpi: KpiSpec; className?: string }) {
 
 export function Hero({ activity }: { activity: ActivityDetail }) {
   const kpis: KpiSpec[] = [
-    { label: "Distance",    value: activity.distanceKm.toFixed(2),   unit: "km"  },
-    { label: "Durée",       value: fmtDurationHm(activity.durationSec)            },
-    { label: "Allure moy.", value: fmtPace(activity.paceSecPerKm),   unit: "/km" },
-    { label: "FC moy.",     value: `${activity.avgHrBpm}`,           unit: "bpm" },
+    { label: "Distance",       value: activity.distanceKm.toFixed(2),  unit: "km"   },
+    { label: "Durée",          value: fmtDurationHm(activity.durationSec)            },
+    { label: "Allure moy.",    value: fmtPace(activity.paceSecPerKm),  unit: "/km"  },
+    { label: "FC moy.",        value: `${activity.avgHrBpm}`,          unit: "bpm"  },
+    { label: "Dén. +",         value: `${activity.elevGainM}`,         unit: "m"    },
+    { label: "Dén. −",         value: `${activity.elevLossM}`,         unit: "m"    },
+    { label: "Cadence moy.",   value: `${activity.cadenceAvg}`,        unit: "spm"  },
+    { label: "Charge entr.",   value: `${activity.trainingLoad}`,      unit: "AU"   },
+    { label: "Ch. aérobie",    value: `${activity.aerobicLoad}`,       unit: "AU"   },
+    { label: "Ch. anaérobie",  value: `${activity.anaerobicLoad}`,     unit: "AU"   },
   ];
 
   return (

@@ -90,6 +90,8 @@ export interface ActivityDetail {
   cadenceAvg: number;
   caloriesKcal: number;
   trainingLoad: number;
+  aerobicLoad: number;
+  anaerobicLoad: number;
   decouplingPct: number;
   coordinates: [number, number][];
   chartData: ChartPoint[];
@@ -216,6 +218,8 @@ export const MOCK_ACTIVITY: ActivityDetail = {
   cadenceAvg: 176,
   caloriesKcal: 742,
   trainingLoad: 87,
+  aerobicLoad: 65,
+  anaerobicLoad: 22,
   decouplingPct: 4.2,
   coordinates: GPS_TRACE,
   chartData: CHART_DATA,
