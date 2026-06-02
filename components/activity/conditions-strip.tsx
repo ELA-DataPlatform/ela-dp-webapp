@@ -49,18 +49,30 @@ export function ConditionsStrip({ conditions }: { conditions: ActivityConditions
         label="Chaussure"
         className="border-t border-(--color-border) sm:border-t-0 sm:border-l"
       >
-        <span className="truncate">{conditions.shoeName}</span>
-        <span className="text-(--color-fg-subtle)">
-          {" · "}
-          <span className="font-mono tabular-nums">{conditions.shoeTotalKm}</span> km
-        </span>
+        {conditions.shoeName != null ? (
+          <>
+            <span className="truncate">{conditions.shoeName}</span>
+            <span className="text-(--color-fg-subtle)">
+              {" · "}
+              <span className="font-mono tabular-nums">{conditions.shoeTotalKm}</span> km
+            </span>
+          </>
+        ) : (
+          <span className="text-(--color-fg-subtle)">—</span>
+        )}
       </Item>
       <Item
         label="RPE ressenti"
         className="border-l border-t border-(--color-border) sm:border-t-0"
       >
-        <span className="font-mono tabular-nums">{conditions.rpe}</span>
-        <span className="text-(--color-fg-subtle)"> / 10</span>
+        {conditions.rpe != null ? (
+          <>
+            <span className="font-mono tabular-nums">{conditions.rpe}</span>
+            <span className="text-(--color-fg-subtle)"> / 10</span>
+          </>
+        ) : (
+          <span className="text-(--color-fg-subtle)">—</span>
+        )}
       </Item>
     </div>
   );

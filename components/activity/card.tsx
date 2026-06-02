@@ -28,7 +28,7 @@ export function CardHeader({
   return (
     <div
       className={cn(
-        "flex h-9 items-center justify-between gap-3 border-b border-(--color-border) bg-(--color-bg-subtle) px-4 sm:px-5",
+        "flex min-h-9 items-center justify-between gap-3 border-b border-(--color-border) bg-(--color-bg-subtle) px-4 sm:px-5",
         className
       )}
     >

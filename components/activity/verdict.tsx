@@ -1,4 +1,3 @@
-import { Sparkles } from "lucide-react";
 import { Card } from "./card";
 
 interface VerdictData {
@@ -49,12 +48,9 @@ export function VerdictPanel({ verdict }: { verdict: VerdictData }) {
   return (
     <Card>
       <div className="flex items-center justify-between border-b border-(--color-border) bg-(--color-bg-subtle) px-4 py-2.5 sm:px-5">
-        <div className="flex items-center gap-2">
-          <Sparkles className="h-3.5 w-3.5 text-(--color-fg-muted)" strokeWidth={1.5} />
-          <span className="text-2xs font-medium uppercase tracking-[0.08em] text-(--color-fg-muted)">
-            Verdict
-          </span>
-        </div>
+        <span className="text-2xs font-medium uppercase tracking-[0.08em] text-(--color-fg-muted)">
+          Verdict
+        </span>
         <span className="font-mono text-2xs tabular-nums text-(--color-fg-subtle)">
           Claude Sonnet 4.6
         </span>
@@ -71,7 +67,7 @@ export function VerdictPanel({ verdict }: { verdict: VerdictData }) {
         <BulletList items={verdict.watch} dotClass="bg-(--color-warning)" />
       </Section>
       <Section label="Recommandations" meta={`${verdict.recommendations.length}`}>
-        <BulletList items={verdict.recommendations} dotClass="bg-(--color-accent)" />
+        <BulletList items={verdict.recommendations} dotClass="bg-(--color-fg-muted)" />
       </Section>
     </Card>
   );

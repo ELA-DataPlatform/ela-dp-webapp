@@ -153,7 +153,7 @@ function StackedPhasesRenderer({ chart }: { chart: StackedPhasesDef }) {
   const total = chart.segments.reduce((sum, s) => sum + s.value, 0);
   return (
     <div className="mt-5 rounded-(--radius-lg) bg-(--color-bg-subtle) px-5 py-[18px]">
-      <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.08em] text-(--color-fg-muted)">{chart.title}</p>
+      <p className="mb-4 text-2xs font-medium uppercase tracking-[0.08em] text-(--color-fg-muted)">{chart.title}</p>
       <div className="flex h-7 w-full overflow-hidden rounded-(--radius-sm)">
         {chart.segments.map((seg) => (
           <div
@@ -167,8 +167,8 @@ function StackedPhasesRenderer({ chart }: { chart: StackedPhasesDef }) {
         {chart.segments.map((seg) => (
           <div key={seg.label} className="flex items-center gap-1.5">
             <span className="h-2 w-2 shrink-0 rounded-[2px]" style={{ background: seg.color }} />
-            <span className="text-[11px] text-(--color-fg-muted)">{seg.label}</span>
-            <span className="font-mono text-[11px] tabular-nums text-(--color-fg-subtle)">
+            <span className="text-2xs text-(--color-fg-muted)">{seg.label}</span>
+            <span className="font-mono text-2xs tabular-nums text-(--color-fg-subtle)">
               {seg.value} {chart.unit}
             </span>
           </div>
@@ -184,12 +184,12 @@ function FactorBreakdownRenderer({ chart }: { chart: FactorBreakdownDef }) {
   return (
     <div className="mt-5 rounded-(--radius-lg) bg-(--color-bg-subtle) px-5 py-[18px]">
       <div className="mb-4 flex items-baseline justify-between">
-        <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-(--color-fg-muted)">{chart.title}</p>
+        <p className="text-2xs font-medium uppercase tracking-[0.08em] text-(--color-fg-muted)">{chart.title}</p>
         <div className="flex items-baseline gap-1">
           <span className="font-mono text-2xl font-medium tabular-nums leading-none text-(--color-fg)">
             {chart.total_value}
           </span>
-          <span className="text-[11px] text-(--color-fg-subtle)">/ 100</span>
+          <span className="text-2xs text-(--color-fg-subtle)">/ 100</span>
         </div>
       </div>
       <div className="flex flex-col gap-3">
@@ -197,7 +197,7 @@ function FactorBreakdownRenderer({ chart }: { chart: FactorBreakdownDef }) {
           <div key={f.label} className="flex flex-col gap-1">
             <div className="flex items-center justify-between">
               <span className="text-[12px] text-(--color-fg-muted)">{f.label}</span>
-              <span className="font-mono text-[11px] tabular-nums text-(--color-fg-subtle)">{f.contribution}%</span>
+              <span className="font-mono text-2xs tabular-nums text-(--color-fg-subtle)">{f.contribution}%</span>
             </div>
             <div className="h-[5px] w-full overflow-hidden rounded-full bg-(--color-bg-muted)">
               <div
@@ -223,12 +223,12 @@ function SparklineTrendRenderer({ chart }: { chart: SparklineTrendDef }) {
   return (
     <div className="mt-5 rounded-(--radius-lg) bg-(--color-bg-subtle) px-5 py-[18px]">
       <div className="mb-4 flex items-baseline justify-between">
-        <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-(--color-fg-muted)">{chart.title}</p>
+        <p className="text-2xs font-medium uppercase tracking-[0.08em] text-(--color-fg-muted)">{chart.title}</p>
         <div className="flex items-baseline gap-1">
           <span className="font-mono text-2xl font-medium tabular-nums leading-none text-(--color-fg)">
             {chart.current_value}
           </span>
-          <span className="text-[11px] text-(--color-fg-subtle)">{chart.unit}</span>
+          <span className="text-2xs text-(--color-fg-subtle)">{chart.unit}</span>
         </div>
       </div>
       <ResponsiveContainer width="100%" height={180}>
@@ -262,22 +262,22 @@ function SparklineTrendRenderer({ chart }: { chart: SparklineTrendDef }) {
 function MetricGridRenderer({ chart }: { chart: MetricGridDef }) {
   return (
     <div className="mt-5 rounded-(--radius-lg) bg-(--color-bg-subtle) px-5 py-[18px]">
-      <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.08em] text-(--color-fg-muted)">{chart.title}</p>
+      <p className="mb-4 text-2xs font-medium uppercase tracking-[0.08em] text-(--color-fg-muted)">{chart.title}</p>
       <div className="grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3">
         {chart.metrics.map((m) => (
           <div key={m.label} className="flex flex-col gap-0.5">
-            <span className="text-[11px] uppercase tracking-[0.05em] text-(--color-fg-subtle)">{m.label}</span>
+            <span className="text-2xs uppercase tracking-[0.05em] text-(--color-fg-subtle)">{m.label}</span>
             <div className="flex items-baseline gap-1">
               <span className="font-mono text-xl font-medium tabular-nums leading-tight text-(--color-fg)">
                 {m.value}
               </span>
               {m.unit && (
-                <span className="text-[11px] text-(--color-fg-muted)">{m.unit}</span>
+                <span className="text-2xs text-(--color-fg-muted)">{m.unit}</span>
               )}
             </div>
             {m.delta !== null && (
               <span className={cn(
-                "font-mono text-[11px] tabular-nums",
+                "font-mono text-2xs tabular-nums",
                 m.delta > 0 ? "text-(--color-danger)" : m.delta < 0 ? "text-(--color-success)" : "text-(--color-fg-subtle)"
               )}>
                 {m.delta > 0 ? "+" : ""}{m.delta}
@@ -298,7 +298,7 @@ function DivergingBarsRenderer({ chart }: { chart: DivergingBarsDef }) {
 
   return (
     <div className="mt-5 rounded-(--radius-lg) bg-(--color-bg-subtle) px-5 py-[18px]">
-      <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.08em] text-(--color-fg-muted)">{chart.title}</p>
+      <p className="mb-4 text-2xs font-medium uppercase tracking-[0.08em] text-(--color-fg-muted)">{chart.title}</p>
       <div className="flex flex-col gap-3">
         {chart.items.map((it) => {
           const delta = it.value - it.baseline;
@@ -313,7 +313,7 @@ function DivergingBarsRenderer({ chart }: { chart: DivergingBarsDef }) {
 
           return (
             <div key={it.label} className="flex items-center gap-2">
-              <span className="w-14 shrink-0 text-right text-[11px] text-(--color-fg-muted)">{it.label}</span>
+              <span className="w-14 shrink-0 text-right text-2xs text-(--color-fg-muted)">{it.label}</span>
               <div className="relative flex flex-1 items-center">
                 {/* Left side (below baseline) */}
                 <div className="flex flex-1 justify-end">
@@ -336,7 +336,7 @@ function DivergingBarsRenderer({ chart }: { chart: DivergingBarsDef }) {
                   )}
                 </div>
               </div>
-              <div className="w-20 shrink-0 font-mono text-[11px] tabular-nums text-(--color-fg-subtle)">
+              <div className="w-20 shrink-0 font-mono text-2xs tabular-nums text-(--color-fg-subtle)">
                 <span className="text-(--color-fg)">{it.value}</span>
                 <span className="mx-1 opacity-40">/</span>
                 {it.baseline}<span className="ml-0.5">{chart.unit}</span>
@@ -450,7 +450,7 @@ function DateCarousel({ selected, today, onChange }: { selected: string; today: 
               )}
               aria-current={isSelected ? "date" : undefined}
             >
-              <span className={cn("font-mono text-[11px] uppercase tracking-[0.06em]", isSelected ? "text-(--color-accent)" : "text-(--color-fg-subtle)")}>
+              <span className={cn("font-mono text-2xs uppercase tracking-[0.06em]", isSelected ? "text-(--color-accent)" : "text-(--color-fg-subtle)")}>
                 {d.toLocaleDateString("fr-FR", { weekday: "short" }).slice(0, 3)}
               </span>
               <span className={cn("font-mono text-sm font-medium tabular-nums", isSelected ? "text-(--color-accent)" : "text-(--color-fg)")}>
@@ -577,12 +577,12 @@ export default function DailyPage() {
             <div className="mb-10">
               {/* Meta line : date · scope · pill statut */}
               <div className="mb-4 flex flex-wrap items-center gap-x-3 gap-y-1">
-                <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-(--color-fg-subtle)">
+                <p className="text-2xs font-medium uppercase tracking-[0.08em] text-(--color-fg-subtle)">
                   {fmt.long}
                   <span className="mx-2 opacity-50">·</span>
                   {getScopeLabel(selectedDate)}
                 </p>
-                <span className={cn("inline-flex h-5 items-center rounded-full border px-2 text-[11px] font-medium", TONE_PILL[status])}>
+                <span className={cn("inline-flex h-5 items-center rounded-full border px-2 text-2xs font-medium", TONE_PILL[status])}>
                   {TONE_LABEL[status]}
                 </span>
               </div>

@@ -215,8 +215,12 @@ export default function HomePage() {
 
   useEffect(() => {
     apiFetch("/webapp/homepage")
-      .then((r) => r.json())
+      .then((r) => {
+        if (!r.ok) throw new Error(`API ${r.status}`);
+        return r.json();
+      })
       .then(setData)
+      .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
 

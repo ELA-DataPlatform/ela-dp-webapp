@@ -90,14 +90,14 @@ function RankIndicator({ change }: { change: RankChange }) {
   if (change === null) return null;
   if (change === "new") {
     return (
-      <span className="font-mono text-[9px] font-medium uppercase tracking-wide text-(--color-success)">
+      <span className="font-mono text-2xs font-medium uppercase tracking-wide text-(--color-success)">
         NEW
       </span>
     );
   }
   if (change > 0) {
     return (
-      <span className="flex items-center gap-px font-mono text-[10px] tabular-nums text-(--color-success)">
+      <span className="flex items-center gap-px font-mono text-2xs tabular-nums text-(--color-success)">
         <ArrowUp size={8} strokeWidth={2.5} />
         {change}
       </span>
@@ -105,13 +105,13 @@ function RankIndicator({ change }: { change: RankChange }) {
   }
   if (change < 0) {
     return (
-      <span className="flex items-center gap-px font-mono text-[10px] tabular-nums text-(--color-danger)">
+      <span className="flex items-center gap-px font-mono text-2xs tabular-nums text-(--color-danger)">
         <ArrowDown size={8} strokeWidth={2.5} />
         {Math.abs(change)}
       </span>
     );
   }
-  return <span className="font-mono text-[10px] text-(--color-fg-disabled)">=</span>;
+  return <span className="font-mono text-2xs text-(--color-fg-disabled)">=</span>;
 }
 
 function Avatar({ name, image }: { name: string; image?: string }) {
@@ -125,7 +125,7 @@ function Avatar({ name, image }: { name: string; image?: string }) {
     );
   }
   return (
-    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-(--color-bg-muted) text-[11px] font-semibold text-(--color-fg-muted)">
+    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-(--color-bg-muted) text-2xs font-semibold text-(--color-fg-muted)">
       {initials(name)}
     </div>
   );
@@ -206,7 +206,7 @@ function RankingCard({
                   <div className="font-mono text-xs font-medium tabular-nums text-(--color-fg)">
                     {entry.time}
                   </div>
-                  <div className="font-mono text-[11px] tabular-nums text-(--color-fg-subtle)">
+                  <div className="font-mono text-2xs tabular-nums text-(--color-fg-subtle)">
                     {entry.plays}×
                   </div>
                 </div>

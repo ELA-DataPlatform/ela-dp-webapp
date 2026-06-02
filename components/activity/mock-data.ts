@@ -38,6 +38,7 @@ export interface Track {
   artistName: string;
   albumName: string;
   albumColor: string;
+  albumImageUrl?: string;
   coordinates: [number, number];
 }
 
@@ -66,9 +67,15 @@ export interface ActivityConditions {
   windKmh: number;
   windDir: string;
   weatherLabel: string;
-  shoeName: string;
-  shoeTotalKm: number;
-  rpe: number;
+  shoeName?: string;
+  shoeTotalKm?: number;
+  rpe?: number;
+}
+
+export interface GpsPoint {
+  distKm: number;
+  lat: number;
+  lon: number;
 }
 
 export interface ActivityDetail {
@@ -90,8 +97,11 @@ export interface ActivityDetail {
   cadenceAvg: number;
   caloriesKcal: number;
   trainingLoad: number;
+  aerobicLoad: number;
+  anaerobicLoad: number;
   decouplingPct: number;
   coordinates: [number, number][];
+  gpsTrace?: GpsPoint[];
   chartData: ChartPoint[];
   laps: Lap[];
   segments: Segment[];
@@ -216,6 +226,8 @@ export const MOCK_ACTIVITY: ActivityDetail = {
   cadenceAvg: 176,
   caloriesKcal: 742,
   trainingLoad: 87,
+  aerobicLoad: 65,
+  anaerobicLoad: 22,
   decouplingPct: 4.2,
   coordinates: GPS_TRACE,
   chartData: CHART_DATA,
