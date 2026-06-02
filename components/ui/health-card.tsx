@@ -112,7 +112,7 @@ export function HealthCard({
 
   return (
     <div className={cn(
-      "flex flex-col rounded-(--radius-md) border border-(--color-border) bg-(--color-bg-elevated) py-4 px-[18px]",
+      "flex flex-col rounded-(--radius-md) border border-(--color-border) bg-(--color-bg-elevated) p-4",
       className
     )}>
       {/* Header */}
@@ -139,7 +139,7 @@ export function HealthCard({
             {primaryValue}
           </span>
           {primaryUnit && (
-            <span className="text-base font-normal text-(--color-fg-muted)">{primaryUnit}</span>
+            <span className="text-sm font-normal text-(--color-fg-muted)">{primaryUnit}</span>
           )}
         </div>
       )}

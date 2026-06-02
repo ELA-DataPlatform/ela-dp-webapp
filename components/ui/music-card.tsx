@@ -71,7 +71,7 @@ export function MusicListeningCard({
 
   return (
     <div className={cn(
-      "flex flex-col rounded-(--radius-md) border border-(--color-border) bg-(--color-bg-elevated) py-4 px-[18px]",
+      "flex flex-col rounded-(--radius-md) border border-(--color-border) bg-(--color-bg-elevated) p-4",
       className
     )}>
       <div className="flex items-start justify-between">
@@ -137,14 +137,14 @@ interface RankingItem {
 function RankIndicator({ change }: { change: RankChange }) {
   if (change === "new") {
     return (
-      <span className="font-mono text-[9px] font-medium uppercase tracking-wide text-(--color-success)">
+      <span className="font-mono text-2xs font-medium uppercase tracking-wide text-(--color-success)">
         NEW
       </span>
     );
   }
   if (change > 0) {
     return (
-      <span className="flex items-center gap-px font-mono text-[10px] tabular-nums text-(--color-success)">
+      <span className="flex items-center gap-px font-mono text-2xs tabular-nums text-(--color-success)">
         <ArrowUp size={10} strokeWidth={2} />
         {change}
       </span>
@@ -152,13 +152,13 @@ function RankIndicator({ change }: { change: RankChange }) {
   }
   if (change < 0) {
     return (
-      <span className="flex items-center gap-px font-mono text-[10px] tabular-nums text-(--color-danger)">
+      <span className="flex items-center gap-px font-mono text-2xs tabular-nums text-(--color-danger)">
         <ArrowDown size={10} strokeWidth={2} />
         {Math.abs(change)}
       </span>
     );
   }
-  return <span className="font-mono text-[10px] text-(--color-fg-subtle)">=</span>;
+  return <span className="font-mono text-2xs text-(--color-fg-subtle)">=</span>;
 }
 
 interface MusicRankingCardProps {
@@ -178,7 +178,7 @@ export function MusicRankingCard({
 }: MusicRankingCardProps) {
   return (
     <div className={cn(
-      "flex flex-col overflow-hidden rounded-(--radius-md) border border-(--color-border) bg-(--color-bg-elevated) py-4 px-[18px]",
+      "flex flex-col overflow-hidden rounded-(--radius-md) border border-(--color-border) bg-(--color-bg-elevated) p-4",
       className
     )}>
       <span className="shrink-0 text-2xs font-medium uppercase tracking-[0.08em] text-(--color-fg-muted)">
@@ -230,7 +230,7 @@ export function MusicRankingCard({
         {viewMoreHref && (
           <a
             href={viewMoreHref}
-            className="inline-flex items-center rounded-full border border-(--color-border) bg-(--color-bg-subtle) px-2 py-0.5 text-[10px] font-medium text-(--color-fg-disabled) transition-colors hover:border-(--color-border-strong) hover:text-(--color-fg-subtle) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-accent)"
+            className="inline-flex items-center rounded-full border border-(--color-border) bg-(--color-bg-subtle) px-2 py-0.5 text-2xs font-medium text-(--color-fg-disabled) transition-colors hover:border-(--color-border-strong) hover:text-(--color-fg-subtle) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-accent)"
           >
             Voir plus
           </a>
@@ -302,7 +302,7 @@ export function MusicTopTrackCard({
         {viewMoreHref && (
           <a
             href={viewMoreHref}
-            className="inline-flex items-center rounded-full border border-(--color-border) bg-(--color-bg-subtle) px-2 py-0.5 text-[10px] font-medium text-(--color-fg-disabled) transition-colors hover:border-(--color-border-strong) hover:text-(--color-fg-subtle) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-accent)"
+            className="inline-flex items-center rounded-full border border-(--color-border) bg-(--color-bg-subtle) px-2 py-0.5 text-2xs font-medium text-(--color-fg-disabled) transition-colors hover:border-(--color-border-strong) hover:text-(--color-fg-subtle) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-accent)"
           >
             Voir plus
           </a>

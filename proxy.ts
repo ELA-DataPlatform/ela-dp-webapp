@@ -3,6 +3,11 @@ import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 
 export async function proxy(request: NextRequest) {
+  // En dev, toutes les routes sont accessibles sans auth
+  if (process.env.NODE_ENV === "development") {
+    return NextResponse.next()
+  }
+
   const { pathname } = request.nextUrl
 
   // Routes toujours accessibles

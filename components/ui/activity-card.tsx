@@ -177,7 +177,7 @@ function RouteMap({ coordinates }: { coordinates?: [number, number][] }) {
 export function ActivityCard({ name, date, meta, stats, coordinates }: ActivityCardProps) {
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-(--radius-md) border border-(--color-border) bg-(--color-bg-elevated)">
-      <div className="shrink-0 px-[18px] pt-4 pb-3 border-b border-(--color-border)">
+      <div className="shrink-0 px-4 pt-4 pb-3 border-b border-(--color-border)">
         <span className="text-2xs font-medium uppercase tracking-[0.08em] text-(--color-fg-muted)">
           Dernière activité
         </span>
@@ -196,7 +196,7 @@ export function ActivityCard({ name, date, meta, stats, coordinates }: ActivityC
           {stats.slice(0, 4).map((stat) => (
             <div
               key={stat.label}
-              className="flex flex-col justify-center px-[18px] py-2"
+              className="flex flex-col justify-center px-4 py-2"
             >
               <p className="font-mono text-sm font-medium tabular-nums text-(--color-fg)">
                 {stat.value}

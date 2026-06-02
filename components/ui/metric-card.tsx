@@ -72,7 +72,7 @@ export function MetricCard({
       : `${isPositive ? "+" : ""}${Math.round(rawDelta * 10) / 10}`;
 
   return (
-    <div className={cn("flex h-full flex-col rounded-(--radius-md) border border-(--color-border) bg-(--color-bg-elevated) py-4 px-[18px]", className)}>
+    <div className={cn("flex h-full flex-col rounded-(--radius-md) border border-(--color-border) bg-(--color-bg-elevated) p-4", className)}>
       <div className="flex items-start justify-between gap-4">
         <div className="flex flex-col gap-0.5">
           <span className="text-2xs font-medium uppercase tracking-[0.08em] text-(--color-fg-muted)">
@@ -86,7 +86,7 @@ export function MetricCard({
         <div className="shrink-0 text-right">
           <div className="font-mono text-2xl font-medium tabular-nums leading-tight text-(--color-fg)">
             {currentValue}
-            <span className="ml-1 font-sans text-base font-normal text-(--color-fg-muted)">
+            <span className="ml-1 font-sans text-sm font-normal text-(--color-fg-muted)">
               {unit}
             </span>
           </div>

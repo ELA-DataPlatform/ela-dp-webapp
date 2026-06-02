@@ -19,14 +19,14 @@ interface KpiCardProps {
 function KpiCard({ label, value, unit, subtitle, delta, deltaPositive, valueClassName }: KpiCardProps) {
   return (
     <div className="flex flex-col justify-between rounded-(--radius-md) border border-(--color-border) bg-(--color-bg-elevated) px-5 py-4">
-      <p className="text-[10px] font-medium uppercase tracking-[0.1em] text-(--color-fg-subtle)">
+      <p className="text-2xs font-medium uppercase tracking-[0.08em] text-(--color-fg-subtle)">
         {label}
       </p>
       <div className="mt-3">
         <div className="flex items-baseline gap-1.5">
           <span
             className={cn(
-              "font-mono text-[22px] font-medium leading-none tabular-nums text-(--color-fg)",
+              "font-mono text-xl font-medium leading-none tabular-nums text-(--color-fg)",
               valueClassName
             )}
           >
@@ -42,7 +42,7 @@ function KpiCard({ label, value, unit, subtitle, delta, deltaPositive, valueClas
         {delta && (
           <p
             className={cn(
-              "mt-1 font-mono text-[11px] tabular-nums",
+              "mt-1 font-mono text-2xs tabular-nums",
               deltaPositive ? "text-(--color-success)" : "text-(--color-danger)"
             )}
           >
@@ -67,7 +67,7 @@ export function DayHeroCard({ summary, extraCard }: DayHeroCardProps) {
     <div className={cn("mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:gap-4", cols)}>
       {/* Résumé — full width mobile, pleine largeur tablet, 2fr desktop */}
       <div className="sm:col-span-2 lg:col-span-1 rounded-(--radius-md) border border-(--color-border) bg-(--color-bg-elevated) px-5 py-4">
-        <p className="mb-2.5 text-[10px] font-medium uppercase tracking-[0.1em] text-(--color-fg-subtle)">
+        <p className="mb-2.5 text-2xs font-medium uppercase tracking-[0.08em] text-(--color-fg-subtle)">
           Le résumé
         </p>
         <p className="text-sm leading-[1.65] text-(--color-fg)">

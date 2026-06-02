@@ -36,7 +36,7 @@ export function GoalCard({ name, distance, elevation, date, dateLabel, prepStart
   }, [date, prepStart]);
 
   return (
-    <div className="flex h-full flex-col justify-between rounded-(--radius-md) border border-(--color-border) bg-(--color-bg-elevated) py-4 px-[18px]">
+    <div className="flex h-full flex-col justify-between rounded-(--radius-md) border border-(--color-border) bg-(--color-bg-elevated) p-4">
       {/* Eyebrow */}
       <span className="text-2xs font-medium uppercase tracking-[0.08em] text-(--color-fg-muted)">
         {name}
@@ -44,7 +44,7 @@ export function GoalCard({ name, distance, elevation, date, dateLabel, prepStart
 
       {/* Countdown */}
       <div className="flex items-baseline gap-2">
-        <span className="font-mono text-[2.5rem] font-semibold tabular-nums leading-none text-(--color-fg)">
+        <span className="font-mono text-3xl font-semibold tabular-nums leading-none text-(--color-fg)">
           {daysLeft}
         </span>
         <span className="text-sm text-(--color-fg-muted)">jours</span>

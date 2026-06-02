@@ -43,9 +43,12 @@ async function handler(
   req: NextRequest,
   { params }: { params: Promise<{ path: string[] }> }
 ) {
-  const session = await getServerSession(authOptions)
-  if (!session) {
-    return NextResponse.json({ error: "Non autorisé" }, { status: 401 })
+  const isDev = process.env.NODE_ENV === "development"
+  if (!isDev) {
+    const session = await getServerSession(authOptions)
+    if (!session) {
+      return NextResponse.json({ error: "Non autorisé" }, { status: 401 })
+    }
   }
 
   const audience = process.env.NEXT_PUBLIC_API_URL

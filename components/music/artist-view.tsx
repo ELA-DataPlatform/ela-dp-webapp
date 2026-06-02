@@ -272,7 +272,7 @@ function Heatmap({ data }: { data: DayPoint[] }) {
             {monthPositions.map(({ month, col }) => (
               <span key={`${month}-${col}`}
                 style={{ position: "absolute", left: col * (cell + HEATMAP_GAP) }}
-                className="text-[10px] text-(--color-fg-subtle)">
+                className="text-2xs text-(--color-fg-subtle)">
                 {month}
               </span>
             ))}
