@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   ComposedChart,
   Area,
@@ -23,7 +23,7 @@ import type { ChartPoint, Segment, SegmentKind } from "./mock-data";
 
 const SERIES = [
   { key: "paceSecPerKm", label: "Allure",  color: "var(--color-fg)",        defaultOn: true,  axis: "pace"  },
-  { key: "hrBpm",        label: "FC",      color: "var(--color-danger)",    defaultOn: true,  axis: "hr"    },
+  { key: "hrBpm",        label: "FC",      color: "var(--color-chart-2)",   defaultOn: true,  axis: "hr"    },
   { key: "elevM",        label: "Alt.",    color: "var(--color-fg-muted)",  defaultOn: true,  axis: "elev"  },
   { key: "cadenceSpm",   label: "Cadence", color: "var(--color-chart-2)",   defaultOn: false, axis: "cad"   },
 ] as const;
@@ -116,7 +116,7 @@ function BarTooltip({
       </p>
       <div className="flex flex-col gap-0.5">
         <span className="font-mono text-xs tabular-nums text-(--color-fg)">{fmtPace(d.rawPace)} /km</span>
-        <span className="font-mono text-xs tabular-nums text-(--color-danger)">{d.hrBpm} bpm</span>
+        <span className="font-mono text-xs tabular-nums text-(--color-chart-2)">{d.hrBpm} bpm</span>
         <span className="font-mono text-2xs tabular-nums text-(--color-fg-subtle)">
           {d.distanceKm.toFixed(1)} km · {fmtDurationHm(d.durationSec)}
         </span>
@@ -139,6 +139,13 @@ export function ActivityChart({
     () => new Set(SERIES.filter((s) => !s.defaultOn).map((s) => s.key))
   );
   const { hoveredKm, setHoveredKm } = useActivityFocus();
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 640);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
   function toggle(key: SeriesKey) {
     setHidden((prev) => {
@@ -188,27 +195,6 @@ export function ActivityChart({
         label="Analyse temporelle"
         action={
           <div className="flex items-center gap-3">
-            {/* Segmented control Ligne / Segments */}
-            <div className="flex rounded-(--radius-sm) border border-(--color-border) bg-(--color-bg-subtle) p-0.5">
-              {(["line", "bars"] as ViewMode[]).map((v) => (
-                <button
-                  key={v}
-                  onClick={() => setView(v)}
-                  className={cn(
-                    "rounded-[3px] px-2.5 py-0.5 text-2xs font-medium transition-colors",
-                    "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-accent)",
-                    v === view
-                      ? "bg-(--color-bg-elevated) text-(--color-accent)"
-                      : "text-(--color-fg-muted) hover:text-(--color-fg)"
-                  )}
-                  style={v === view ? { boxShadow: "var(--shadow-sm)" } : undefined}
-                  aria-pressed={v === view}
-                >
-                  {v === "line" ? "Ligne" : "Segments"}
-                </button>
-              ))}
-            </div>
-
             {/* Series toggles — uniquement en mode ligne */}
             {view === "line" && (
               <div className="hidden items-center gap-3 sm:flex">
@@ -232,6 +218,26 @@ export function ActivityChart({
                 })}
               </div>
             )}
+
+            {/* Pills Ligne / Segs */}
+            <div className="flex items-center gap-1">
+              {(["line", "bars"] as ViewMode[]).map((v) => (
+                <button
+                  key={v}
+                  onClick={() => setView(v)}
+                  className={cn(
+                    "inline-flex h-6 items-center rounded-full border px-2.5 text-2xs font-medium transition-colors",
+                    "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-accent)",
+                    v === view
+                      ? "border-(--color-accent) bg-(--color-accent-bg) text-(--color-accent)"
+                      : "border-(--color-border) bg-(--color-bg-elevated) text-(--color-fg) hover:border-(--color-border-strong) hover:bg-(--color-bg-muted)"
+                  )}
+                  aria-pressed={v === view}
+                >
+                  {v === "line" ? "Ligne" : "Segs"}
+                </button>
+              ))}
+            </div>
           </div>
         }
       />
@@ -259,12 +265,12 @@ export function ActivityChart({
         </div>
       )}
 
-      <div className="px-2 py-3 sm:px-4 sm:py-4">
+      <div className="px-0 pt-1 pb-2">
         {view === "line" ? (
           <ResponsiveContainer width="100%" height={240}>
             <ComposedChart
               data={data}
-              margin={{ top: 4, right: 36, bottom: 0, left: 36 }}
+              margin={{ top: 4, right: isMobile ? 0 : 12, bottom: 0, left: isMobile ? 0 : 12 }}
               onMouseMove={(s) => {
                 const v = s?.activeLabel;
                 if (v != null) setHoveredKm(typeof v === "number" ? v : Number(v));
@@ -288,7 +294,8 @@ export function ActivityChart({
                 tick={{ fontSize: 10, fontFamily: "var(--font-mono)", fill: "var(--color-fg-subtle)" }}
                 tickLine={false}
                 axisLine={false}
-                width={36}
+                hide={isMobile}
+                width={12}
               />
               <YAxis
                 yAxisId="hr"
@@ -297,7 +304,8 @@ export function ActivityChart({
                 tick={{ fontSize: 10, fontFamily: "var(--font-mono)", fill: "var(--color-fg-subtle)" }}
                 tickLine={false}
                 axisLine={false}
-                width={32}
+                hide={isMobile}
+                width={12}
               />
               <YAxis yAxisId="elev" hide domain={[0, ranges.elevMax * 4]} />
               <YAxis yAxisId="cad"  hide domain={[ranges.cadMin - 10, ranges.cadMax + 30]} />
@@ -347,7 +355,7 @@ export function ActivityChart({
                   yAxisId="hr"
                   type="monotone"
                   dataKey="hrBpm"
-                  stroke="var(--color-danger)"
+                  stroke="var(--color-chart-2)"
                   strokeWidth={1.5}
                   dot={false}
                   activeDot={{ r: 3, strokeWidth: 0 }}

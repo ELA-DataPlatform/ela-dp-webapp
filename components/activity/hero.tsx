@@ -12,15 +12,15 @@ interface KpiSpec {
 
 function HeroKpi({ kpi, className }: { kpi: KpiSpec; className?: string }) {
   return (
-    <div className={cn("flex flex-col justify-between gap-2 p-4 sm:p-5", className)}>
+    <div className={cn("flex flex-col gap-1 py-1.5 px-3", className)}>
       <span className="text-2xs font-medium uppercase tracking-[0.08em] text-(--color-fg-muted)">
         {kpi.label}
       </span>
       <div className="flex items-baseline gap-1">
-        <span className="font-mono text-2xl font-medium tabular-nums leading-tight text-(--color-fg) sm:text-[1.75rem]">
+        <span className="font-mono text-lg font-medium tabular-nums leading-tight text-(--color-fg)">
           {kpi.value}
         </span>
-        {kpi.unit && <span className="text-sm text-(--color-fg-muted)">{kpi.unit}</span>}
+        {kpi.unit && <span className="text-2xs text-(--color-fg-muted)">{kpi.unit}</span>}
       </div>
     </div>
   );
@@ -41,13 +41,13 @@ export function Hero({ activity }: { activity: ActivityDetail }) {
   ];
 
   return (
-    <div className="grid gap-4 lg:grid-cols-12">
-      <Card className="aspect-[4/3] lg:col-span-8 lg:aspect-auto lg:min-h-[420px]">
+    <div className="grid gap-4 lg:grid-cols-12 lg:h-[280px]">
+      <Card className="aspect-video lg:col-span-8 lg:aspect-auto">
         <RouteMap activity={activity} />
       </Card>
 
       <Card className="lg:col-span-4">
-        <div className="grid grid-cols-2">
+        <div className="grid grid-cols-2 lg:h-full">
           {kpis.map((kpi, i) => (
             <HeroKpi
               key={kpi.label}

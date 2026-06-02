@@ -38,6 +38,7 @@ export interface Track {
   artistName: string;
   albumName: string;
   albumColor: string;
+  albumImageUrl?: string;
   coordinates: [number, number];
 }
 
@@ -66,9 +67,15 @@ export interface ActivityConditions {
   windKmh: number;
   windDir: string;
   weatherLabel: string;
-  shoeName: string;
-  shoeTotalKm: number;
-  rpe: number;
+  shoeName?: string;
+  shoeTotalKm?: number;
+  rpe?: number;
+}
+
+export interface GpsPoint {
+  distKm: number;
+  lat: number;
+  lon: number;
 }
 
 export interface ActivityDetail {
@@ -94,6 +101,7 @@ export interface ActivityDetail {
   anaerobicLoad: number;
   decouplingPct: number;
   coordinates: [number, number][];
+  gpsTrace?: GpsPoint[];
   chartData: ChartPoint[];
   laps: Lap[];
   segments: Segment[];

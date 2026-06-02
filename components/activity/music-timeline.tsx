@@ -15,12 +15,20 @@ export function MusicTimeline({ tracks }: { tracks: Track[] }) {
             key={i}
             className="grid grid-cols-[2.25rem_1fr_auto] items-center gap-3 px-4 py-3 transition-colors hover:bg-(--color-bg-muted) sm:px-5"
           >
-            <div
-              className="flex h-9 w-9 items-center justify-center rounded-(--radius-sm) text-sm font-semibold text-white"
-              style={{ background: t.albumColor }}
-            >
-              {t.artistName.charAt(0)}
-            </div>
+            {t.albumImageUrl ? (
+              <img
+                src={t.albumImageUrl}
+                alt={t.albumName}
+                className="h-9 w-9 rounded-(--radius-sm) object-cover"
+              />
+            ) : (
+              <div
+                className="flex h-9 w-9 items-center justify-center rounded-(--radius-sm) text-sm font-semibold text-white"
+                style={{ background: t.albumColor }}
+              >
+                {t.artistName.charAt(0)}
+              </div>
+            )}
             <div className="min-w-0">
               <div className="truncate text-sm font-medium text-(--color-fg)">{t.trackName}</div>
               <div className="mt-0.5 truncate text-xs text-(--color-fg-subtle)">

@@ -46,7 +46,7 @@ export function fmtDelta(
 
 /**
  * Interpolate a coordinate on a polyline at a given cumulative distance.
- * Approximation linéaire par index — suffisant pour positionner un marqueur de hover.
+ * Fallback linéaire par index — utilisé uniquement si gpsTrace est absent.
  */
 export function coordAtKm(
   coords: [number, number][],
@@ -63,4 +63,57 @@ export function coordAtKm(
   const [lat1, lng1] = coords[i];
   const [lat2, lng2] = coords[i + 1];
   return [lat1 + (lat2 - lat1) * frac, lng1 + (lng2 - lng1) * frac];
+}
+
+/** Haversine distance in km between two lat/lon points. */
+function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLon / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+/**
+ * Build a GPS trace with cumulative distances from a raw polyline (lat/lon only).
+ * Cumulative distances are computed via Haversine — no dependency on distance fields.
+ */
+export function buildGpsTrace(
+  polyline: [number, number][]
+): Array<{ distKm: number; lat: number; lon: number }> {
+  if (!polyline.length) return [];
+  const trace: Array<{ distKm: number; lat: number; lon: number }> = [];
+  let cumDist = 0;
+  trace.push({ distKm: 0, lat: polyline[0][0], lon: polyline[0][1] });
+  for (let i = 1; i < polyline.length; i++) {
+    const [lat1, lon1] = polyline[i - 1];
+    const [lat2, lon2] = polyline[i];
+    cumDist += haversineKm(lat1, lon1, lat2, lon2);
+    trace.push({ distKm: cumDist, lat: lat2, lon: lon2 });
+  }
+  return trace;
+}
+
+/**
+ * Interpolate a coordinate using the timeseries GPS trace (exact cumulative distances).
+ * Binary search on distKm — accurate regardless of point density variation.
+ */
+export function coordAtKmTrace(
+  trace: Array<{ distKm: number; lat: number; lon: number }>,
+  km: number
+): [number, number] {
+  if (!trace.length) return [0, 0];
+  if (km <= trace[0].distKm) return [trace[0].lat, trace[0].lon];
+  if (km >= trace[trace.length - 1].distKm) return [trace[trace.length - 1].lat, trace[trace.length - 1].lon];
+  let lo = 0, hi = trace.length - 1;
+  while (lo < hi - 1) {
+    const mid = (lo + hi) >> 1;
+    if (trace[mid].distKm <= km) lo = mid;
+    else hi = mid;
+  }
+  const a = trace[lo], b = trace[hi];
+  const t = (km - a.distKm) / (b.distKm - a.distKm);
+  return [a.lat + (b.lat - a.lat) * t, a.lon + (b.lon - a.lon) * t];
 }

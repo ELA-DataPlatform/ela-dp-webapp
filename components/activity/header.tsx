@@ -25,7 +25,7 @@ export function ActivityHeader({ activity }: { activity: ActivityDetail }) {
       </Link>
 
       <div className="min-w-0 flex-1">
-        <h1 className="truncate text-base font-semibold tracking-[-0.02em] text-(--color-fg)">
+        <h1 className="truncate text-lg font-semibold tracking-[-0.02em] text-(--color-fg)">
           {activity.title}
         </h1>
         <p className="truncate text-xs text-(--color-fg-subtle)">

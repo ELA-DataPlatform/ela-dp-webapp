@@ -166,7 +166,7 @@ function DateCarousel({
             >
               <span
                 className={cn(
-                  "font-mono text-[11px] uppercase tracking-[0.06em]",
+                  "font-mono text-2xs uppercase tracking-[0.06em]",
                   isSelected ? "text-(--color-accent)" : "text-(--color-fg-subtle)"
                 )}
               >
@@ -271,7 +271,7 @@ function Heatmap({ store, today }: { store: HabitStore; today: string }) {
             return (
               <div
                 key={idx}
-                className="w-[10px] font-mono text-[10px] uppercase tracking-wider text-(--color-fg-subtle)"
+                className="w-[10px] font-mono text-2xs uppercase tracking-wider text-(--color-fg-subtle)"
               >
                 {lbl?.label ?? ""}
               </div>
@@ -286,7 +286,7 @@ function Heatmap({ store, today }: { store: HabitStore; today: string }) {
               <div
                 key={i}
                 className={cn(
-                  "flex h-[10px] w-3 items-center font-mono text-[10px] text-(--color-fg-subtle)",
+                  "flex h-[10px] w-3 items-center font-mono text-2xs text-(--color-fg-subtle)",
                   i % 2 === 1 ? "opacity-0" : ""
                 )}
               >
@@ -328,7 +328,7 @@ function Heatmap({ store, today }: { store: HabitStore; today: string }) {
         </div>
 
         {/* Legend */}
-        <div className="ml-5 mt-2 flex items-center gap-2 font-mono text-[10px] text-(--color-fg-subtle)">
+        <div className="ml-5 mt-2 flex items-center gap-2 font-mono text-2xs text-(--color-fg-subtle)">
           <span>1</span>
           <div className={cn("h-[10px] w-[10px] rounded-[2px]", moodTone(2))} />
           <div className={cn("h-[10px] w-[10px] rounded-[2px]", moodTone(4))} />
