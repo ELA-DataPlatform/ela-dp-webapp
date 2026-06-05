@@ -42,17 +42,22 @@ async function getAgentToken(): Promise<string> {
 
 // ── Agent call ────────────────────────────────────────────────────
 
-async function callAgent(message: string): Promise<string> {
+interface HistoryItem {
+  role: "user" | "assistant";
+  content: string;
+}
+
+async function callAgent(message: string, history: HistoryItem[]): Promise<string> {
   const url = process.env.AGENTS_API_URL!;
   const token = await getAgentToken();
 
-  const res = await fetch(`${url}/query`, {
-    method: "PUT",
+  const res = await fetch(`${url}/chat`, {
+    method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify({ message, agent: "test", days: 30 }),
+    body: JSON.stringify({ message, history, days: 30 }),
   });
 
   if (!res.ok) {
@@ -60,8 +65,36 @@ async function callAgent(message: string): Promise<string> {
     throw new Error(`Agent ${res.status}: ${body}`);
   }
 
-  const data = (await res.json()) as { response: string };
-  return data.response;
+  // Lire le stream SSE et collecter les chunks de texte
+  const reader = res.body!.getReader();
+  const decoder = new TextDecoder();
+  let fullText = "";
+  let buffer = "";
+  let streamDone = false;
+
+  while (!streamDone) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split("\n");
+    buffer = lines.pop() ?? "";
+
+    for (const line of lines) {
+      const raw = line.startsWith("data:") ? line.slice(5).trim() : line.trim();
+      if (!raw) continue;
+      try {
+        const event = JSON.parse(raw) as { type: string; content?: string };
+        if (event.type === "text" && event.content) fullText += event.content;
+        if (event.type === "done") { streamDone = true; break; }
+      } catch {
+        // ligne non-JSON, on ignore
+      }
+    }
+  }
+
+  if (!fullText) throw new Error("Réponse agent vide");
+  return fullText;
 }
 
 // ── Handler ───────────────────────────────────────────────────────
@@ -79,11 +112,13 @@ export async function POST(req: Request) {
     conversationTitle,
     isNew,
     message,
+    history = [],
   }: {
     conversationId: string;
     conversationTitle?: string;
     isNew?: boolean;
     message: string;
+    history?: HistoryItem[];
   } = await req.json();
 
   if (!conversationId || !message) {
@@ -116,7 +151,7 @@ export async function POST(req: Request) {
 
     // 3. Appeler l'agent
     console.log("[chat/POST] callAgent");
-    const response = await callAgent(message);
+    const response = await callAgent(message, history);
 
     // 4. Sauvegarder la réponse assistant
     console.log("[chat/POST] insertMessage assistant");

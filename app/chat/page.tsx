@@ -231,6 +231,17 @@ export default function ChatPage() {
     const isNew = conv?.isLocal ?? false;
     const conversationTitle = text.slice(0, 60);
 
+    // Historique pour le contexte de l'agent
+    const history = messages
+      .filter((m) => m.blocks.some((b) => b.type === "text"))
+      .map((m) => ({
+        role: m.role,
+        content: m.blocks
+          .filter((b) => b.type === "text")
+          .map((b) => (b as { type: "text"; text: string }).text)
+          .join("\n"),
+      }));
+
     // Mise à jour optimiste UI
     const userMsg: Message = {
       id: `local-${Date.now()}`,
@@ -262,6 +273,7 @@ export default function ChatPage() {
           conversationTitle,
           isNew,
           message: text,
+          history,
         }),
       });
 
