@@ -1,4 +1,4 @@
-import { Home, Activity, Music, BookHeart, UserRound, ListChecks } from "lucide-react";
+import { Home, Activity, Music, BookHeart, UserRound, ListChecks, MessageSquare } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 export interface NavItem {
@@ -15,4 +15,5 @@ export const NAV_ITEMS: NavItem[] = [
   { label: "Activités", href: "/activities", icon: Activity, separator: true },
   { label: "Musique", href: "/music", icon: Music, separator: true },
   { label: "Focus artiste", href: "/music/artist", icon: UserRound },
+  { label: "Chat", href: "/chat", icon: MessageSquare, separator: true },
 ];
