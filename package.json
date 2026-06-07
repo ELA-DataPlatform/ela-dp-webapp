@@ -8,6 +8,7 @@
     "start": "next start"
   },
   "dependencies": {
+    "@google-cloud/bigquery": "^8.3.1",
     "clsx": "^2.1.1",
     "google-auth-library": "^10.6.2",
     "lucide-react": "^1.14.0",
@@ -17,6 +18,7 @@
     "react-dom": "19.2.4",
     "react-markdown": "^10.1.0",
     "recharts": "^3.8.1",
+    "remark-gfm": "^4.0.1",
     "tailwind-merge": "^3.5.0"
   },
   "devDependencies": {

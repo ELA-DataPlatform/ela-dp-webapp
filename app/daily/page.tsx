@@ -553,7 +553,8 @@ export default function DailyPage() {
           const raw = (envelope as { output: unknown }).output;
           data = typeof raw === "string" ? JSON.parse(raw) : raw;
         }
-        const isEmpty = !data || typeof data !== "object" || Object.keys(data as object).length === 0;
+        const isEmpty = !data || typeof data !== "object" || Object.keys(data as object).length === 0
+          || !Array.isArray((data as ApiResponse).sections);
         setBriefing(isEmpty ? null : (data as ApiResponse));
       })
       .catch(() => setBriefing(null))
