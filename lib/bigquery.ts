@@ -15,12 +15,14 @@ const bq = new BigQuery({
   credentials: getCredentials(),
 });
 
+const DATASET = process.env.BIGQUERY_DATASET ?? "dp_lake_agents_dev";
+
 function tbl(name: string) {
-  return `\`${process.env.BIGQUERY_PROJECT_ID}.${process.env.BIGQUERY_DATASET}.${name}\``;
+  return `\`${process.env.BIGQUERY_PROJECT_ID}.${DATASET}.${name}\``;
 }
 
 function table(name: string) {
-  return bq.dataset(process.env.BIGQUERY_DATASET!).table(name);
+  return bq.dataset(DATASET).table(name);
 }
 
 export const newId = () => randomUUID();
