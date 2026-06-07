@@ -40,61 +40,17 @@ async function getAgentToken(): Promise<string> {
   return token;
 }
 
-// ── Agent call ────────────────────────────────────────────────────
+// ── Types ─────────────────────────────────────────────────────────
 
 interface HistoryItem {
   role: "user" | "assistant";
   content: string;
 }
 
-async function callAgent(message: string, history: HistoryItem[]): Promise<string> {
-  const url = process.env.AGENTS_API_URL!;
-  const token = await getAgentToken();
+// ── SSE helpers ───────────────────────────────────────────────────
 
-  const res = await fetch(`${url}/chat`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({ message, history, days: 30 }),
-  });
-
-  if (!res.ok) {
-    const body = await res.text();
-    throw new Error(`Agent ${res.status}: ${body}`);
-  }
-
-  // Lire le stream SSE et collecter les chunks de texte
-  const reader = res.body!.getReader();
-  const decoder = new TextDecoder();
-  let fullText = "";
-  let buffer = "";
-  let streamDone = false;
-
-  while (!streamDone) {
-    const { done, value } = await reader.read();
-    if (done) break;
-
-    buffer += decoder.decode(value, { stream: true });
-    const lines = buffer.split("\n");
-    buffer = lines.pop() ?? "";
-
-    for (const line of lines) {
-      const raw = line.startsWith("data:") ? line.slice(5).trim() : line.trim();
-      if (!raw) continue;
-      try {
-        const event = JSON.parse(raw) as { type: string; content?: string };
-        if (event.type === "text" && event.content) fullText += event.content;
-        if (event.type === "done") { streamDone = true; break; }
-      } catch {
-        // ligne non-JSON, on ignore
-      }
-    }
-  }
-
-  if (!fullText) throw new Error("Réponse agent vide");
-  return fullText;
+function sseData(obj: unknown): Uint8Array {
+  return new TextEncoder().encode(`data: ${JSON.stringify(obj)}\n\n`);
 }
 
 // ── Handler ───────────────────────────────────────────────────────
@@ -125,52 +81,124 @@ export async function POST(req: Request) {
     return Response.json({ error: "conversationId et message requis" }, { status: 400 });
   }
 
-  try {
-    // 1. Créer la conversation si c'est un nouveau chat
-    if (isNew) {
-      console.log("[chat/POST] insertConversation", conversationId);
-      await insertConversation({
-        id: conversationId,
-        userId,
-        title: conversationTitle ?? message.slice(0, 60),
-      });
-    }
+  const stream = new ReadableStream({
+    async start(controller) {
+      const enqueue = (obj: unknown) => controller.enqueue(sseData(obj));
 
-    // 2. Sauvegarder le message utilisateur
-    console.log("[chat/POST] insertMessage user");
-    const userMsgId = newId();
-    await insertMessage({ id: userMsgId, conversationId, role: "user" });
-    await insertBlock({
-      id: newId(),
-      messageId: userMsgId,
-      conversationId,
-      position: 0,
-      type: "text",
-      block: { type: "text", text: message },
-    });
+      try {
+        // 1. Créer la conversation si nécessaire
+        if (isNew) {
+          console.log("[chat/POST] insertConversation", conversationId);
+          await insertConversation({
+            id: conversationId,
+            userId,
+            title: conversationTitle ?? message.slice(0, 60),
+          });
+        }
 
-    // 3. Appeler l'agent
-    console.log("[chat/POST] callAgent");
-    const response = await callAgent(message, history);
+        // 2. Sauvegarder le message utilisateur
+        const userMsgId = newId();
+        await insertMessage({ id: userMsgId, conversationId, role: "user" });
+        await insertBlock({
+          id: newId(),
+          messageId: userMsgId,
+          conversationId,
+          position: 0,
+          type: "text",
+          block: { type: "text", text: message },
+        });
 
-    // 4. Sauvegarder la réponse assistant
-    console.log("[chat/POST] insertMessage assistant");
-    const asstMsgId = newId();
-    const timestamp = new Date().toISOString();
-    await insertMessage({ id: asstMsgId, conversationId, role: "assistant" });
-    await insertBlock({
-      id: newId(),
-      messageId: asstMsgId,
-      conversationId,
-      position: 0,
-      type: "text",
-      block: { type: "text", text: response },
-    });
+        // 3. Appeler l'agent et streamer sa réponse
+        const url = process.env.AGENTS_API_URL!;
+        const token = await getAgentToken();
 
-    return Response.json({ messageId: asstMsgId, response, timestamp });
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    console.error("[chat/POST] error:", msg);
-    return Response.json({ error: msg }, { status: 500 });
-  }
+        const agentRes = await fetch(`${url}/chat`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ message, history, days: 30 }),
+        });
+
+        if (!agentRes.ok) {
+          const body = await agentRes.text();
+          throw new Error(`Agent ${agentRes.status}: ${body}`);
+        }
+
+        const reader = agentRes.body!.getReader();
+        const decoder = new TextDecoder();
+        let fullText = "";
+        let buffer = "";
+        let streamDone = false;
+
+        while (!streamDone) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split("\n");
+          buffer = lines.pop() ?? "";
+
+          for (const line of lines) {
+            const raw = line.startsWith("data:") ? line.slice(5).trim() : line.trim();
+            if (!raw) continue;
+            try {
+              const event = JSON.parse(raw) as {
+                type: string;
+                content?: string;
+                message?: string;
+                error?: string;
+              };
+              if (event.type === "text" && event.content) {
+                fullText += event.content;
+                enqueue({ type: "chunk", content: event.content });
+              }
+              if (event.type === "error") {
+                throw new Error(event.message ?? event.error ?? "Erreur agent");
+              }
+              if (event.type === "done") {
+                streamDone = true;
+                break;
+              }
+            } catch (parseErr) {
+              if (parseErr instanceof SyntaxError) continue; // ligne non-JSON
+              throw parseErr;
+            }
+          }
+        }
+
+        if (!fullText) throw new Error("Réponse agent vide");
+
+        // 4. Sauvegarder la réponse assistant
+        const asstMsgId = newId();
+        const timestamp = new Date().toISOString();
+        await insertMessage({ id: asstMsgId, conversationId, role: "assistant" });
+        await insertBlock({
+          id: newId(),
+          messageId: asstMsgId,
+          conversationId,
+          position: 0,
+          type: "text",
+          block: { type: "text", text: fullText },
+        });
+
+        enqueue({ type: "done", messageId: asstMsgId, timestamp });
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        console.error("[chat/POST] error:", msg);
+        enqueue({ type: "error", message: msg });
+      } finally {
+        controller.close();
+      }
+    },
+  });
+
+  return new Response(stream, {
+    headers: {
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache",
+      Connection: "keep-alive",
+    },
+  });
 }

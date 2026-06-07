@@ -5,24 +5,108 @@ import { Send, Bot } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ChatSidebar } from "@/components/chat/chat-sidebar";
 import { ChartBlock } from "@/components/chat/chart-block";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import type { ConvItem, Message, ChartContent } from "@/components/chat/mock-data";
 
-// ── Markdown inline : **gras** ────────────────────────────────────
+// ── Markdown renderer ─────────────────────────────────────────────
 
-function parseMd(text: string): React.ReactNode {
-  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+function MdContent({ text }: { text: string }) {
   return (
-    <>
-      {parts.map((part, i) =>
-        part.startsWith("**") && part.endsWith("**") ? (
-          <strong key={i} className="font-semibold text-(--color-fg)">
-            {part.slice(2, -2)}
-          </strong>
-        ) : (
-          part
-        )
-      )}
-    </>
+    <ReactMarkdown
+      remarkPlugins={[remarkGfm]}
+      components={{
+        p: ({ children }) => (
+          <p className="mb-2 last:mb-0 leading-[1.6]">{children}</p>
+        ),
+        strong: ({ children }) => (
+          <strong className="font-semibold text-(--color-fg)">{children}</strong>
+        ),
+        em: ({ children }) => (
+          <em className="italic text-(--color-fg-muted)">{children}</em>
+        ),
+        h1: ({ children }) => (
+          <h1 className="mb-2 mt-4 text-base font-semibold tracking-[-0.02em] text-(--color-fg) first:mt-0">
+            {children}
+          </h1>
+        ),
+        h2: ({ children }) => (
+          <h2 className="mb-2 mt-3 text-sm font-semibold tracking-[-0.01em] text-(--color-fg) first:mt-0">
+            {children}
+          </h2>
+        ),
+        h3: ({ children }) => (
+          <h3 className="mb-1.5 mt-3 text-sm font-medium text-(--color-fg) first:mt-0">
+            {children}
+          </h3>
+        ),
+        ul: ({ children }) => (
+          <ul className="mb-2 space-y-1 pl-4 last:mb-0">{children}</ul>
+        ),
+        ol: ({ children }) => (
+          <ol className="mb-2 list-decimal space-y-1 pl-4 last:mb-0">{children}</ol>
+        ),
+        li: ({ children }) => (
+          <li className="relative text-sm leading-[1.6] before:absolute before:-left-3 before:text-(--color-fg-subtle) before:content-['·']">
+            {children}
+          </li>
+        ),
+        code: ({ inline, children, ...props }: { inline?: boolean; children?: React.ReactNode }) =>
+          inline ? (
+            <code
+              className="rounded px-1 py-0.5 font-mono text-[12px] bg-(--color-bg-muted) text-(--color-fg)"
+              {...props}
+            >
+              {children}
+            </code>
+          ) : (
+            <code className="block font-mono text-[12px] leading-relaxed" {...props}>
+              {children}
+            </code>
+          ),
+        pre: ({ children }) => (
+          <pre className="mb-2 overflow-x-auto rounded-(--radius-md) border border-(--color-border) bg-(--color-bg-subtle) px-4 py-3 last:mb-0">
+            {children}
+          </pre>
+        ),
+        blockquote: ({ children }) => (
+          <blockquote className="mb-2 border-l-2 border-(--color-border-strong) pl-3 text-(--color-fg-muted) last:mb-0">
+            {children}
+          </blockquote>
+        ),
+        table: ({ children }) => (
+          <div className="mb-2 overflow-x-auto last:mb-0">
+            <table className="w-full border-collapse text-sm">{children}</table>
+          </div>
+        ),
+        thead: ({ children }) => (
+          <thead className="border-b border-(--color-border) bg-(--color-bg-subtle)">{children}</thead>
+        ),
+        th: ({ children }) => (
+          <th className="px-3 py-2 text-left font-mono text-[11px] font-medium uppercase tracking-[0.08em] text-(--color-fg-muted)">
+            {children}
+          </th>
+        ),
+        td: ({ children }) => (
+          <td className="border-b border-(--color-border) px-3 py-2 text-(--color-fg)">
+            {children}
+          </td>
+        ),
+        hr: () => <hr className="my-3 border-t border-(--color-border)" />,
+        a: ({ href, children }) => (
+          <a
+            href={href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-(--color-accent) underline underline-offset-2 hover:opacity-80"
+          >
+            {children}
+          </a>
+        ),
+      }}
+    >
+      {text}
+    </ReactMarkdown>
   );
 }
 
@@ -48,16 +132,20 @@ function MessageBubble({ message }: { message: Message }) {
         {message.blocks.map((block, i) => (
           <div key={i} className="w-full">
             {block.type === "text" && (
-              <p
+              <div
                 className={cn(
-                  "rounded-(--radius-md) px-4 py-3 text-sm leading-[1.6]",
+                  "rounded-(--radius-md) px-4 py-3 text-sm",
                   isUser
                     ? "bg-(--color-bg-muted) text-(--color-fg)"
                     : "border border-(--color-border) bg-(--color-bg-elevated) text-(--color-fg)"
                 )}
               >
-                {parseMd(block.text)}
-              </p>
+                {isUser ? (
+                  <p className="leading-[1.6]">{block.text}</p>
+                ) : (
+                  <MdContent text={block.text} />
+                )}
+              </div>
             )}
             {block.type === "chart" && (
               <ChartBlock block={block as ChartContent} />
@@ -76,22 +164,30 @@ function MessageBubble({ message }: { message: Message }) {
   );
 }
 
-// ── Typing indicator ──────────────────────────────────────────────
+// ── Streaming bubble (pendant la génération) ──────────────────────
 
-function TypingIndicator() {
+function StreamingBubble({ text }: { text: string }) {
   return (
     <div className="flex gap-3">
       <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-(--color-border) bg-(--color-bg-subtle)">
         <Bot className="h-3.5 w-3.5 text-(--color-fg-muted)" strokeWidth={1.5} />
       </div>
-      <div className="flex items-center gap-1.5 rounded-(--radius-md) border border-(--color-border) bg-(--color-bg-elevated) px-4 py-3">
-        {[0, 1, 2].map((i) => (
-          <span
-            key={i}
-            className="h-1.5 w-1.5 animate-bounce rounded-full bg-(--color-fg-subtle)"
-            style={{ animationDelay: `${i * 150}ms` }}
-          />
-        ))}
+      <div className="max-w-[80%]">
+        <div className="rounded-(--radius-md) border border-(--color-border) bg-(--color-bg-elevated) px-4 py-3 text-sm text-(--color-fg)">
+          {text ? (
+            <MdContent text={text} />
+          ) : (
+            <div className="flex items-center gap-1.5">
+              {[0, 1, 2].map((i) => (
+                <span
+                  key={i}
+                  className="h-1.5 w-1.5 animate-bounce rounded-full bg-(--color-fg-subtle)"
+                  style={{ animationDelay: `${i * 150}ms` }}
+                />
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -145,7 +241,7 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loadingConvs, setLoadingConvs] = useState(true);
   const [loadingMsgs, setLoadingMsgs] = useState(false);
-  const [isTyping, setIsTyping] = useState(false);
+  const [streamingText, setStreamingText] = useState<string | null>(null);
   const [input, setInput] = useState("");
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -169,7 +265,7 @@ export default function ChatPage() {
       .finally(() => setLoadingConvs(false));
   }, []);
 
-  // Si aucune conversation chargée depuis BQ, ouvrir un chat local vide
+  // Si aucune conversation chargée, ouvrir un chat local vide
   useEffect(() => {
     if (!loadingConvs && convItems.length === 0) {
       handleNewChat();
@@ -196,7 +292,7 @@ export default function ChatPage() {
   // Scroll to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages.length, isTyping]);
+  }, [messages.length, streamingText]);
 
   // Auto-resize textarea
   useEffect(() => {
@@ -225,7 +321,7 @@ export default function ChatPage() {
 
   const handleSend = useCallback(async () => {
     const text = input.trim();
-    if (!text || isTyping || !activeConvId) return;
+    if (!text || streamingText !== null || !activeConvId) return;
 
     const conv = convItems.find((c) => c.id === activeConvId);
     const isNew = conv?.isLocal ?? false;
@@ -251,9 +347,8 @@ export default function ChatPage() {
     };
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
-    setIsTyping(true);
+    setStreamingText(""); // démarre le streaming bubble (vide = dots)
 
-    // Marquer la conv comme persistée + mettre à jour son titre
     if (isNew) {
       setConvItems((prev) =>
         prev.map((c) =>
@@ -277,37 +372,76 @@ export default function ChatPage() {
         }),
       });
 
-      const data: { messageId?: string; response?: string; timestamp?: string; error?: string } =
-        await res.json();
-
-      if (!res.ok || data.error) {
-        const errMsg = data.error ?? `Erreur ${res.status}`;
-        console.error("[chat] API error:", errMsg);
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: `err-${Date.now()}`,
-            role: "assistant" as const,
-            blocks: [{ type: "text" as const, text: `⚠️ ${errMsg}` }],
-            timestamp: new Date().toISOString(),
-          },
-        ]);
-        return;
+      if (!res.ok || !res.body) {
+        const data = await res.json().catch(() => ({ error: `Erreur ${res.status}` }));
+        throw new Error(data.error ?? `Erreur ${res.status}`);
       }
 
-      const assistantMsg: Message = {
-        id: data.messageId!,
-        role: "assistant",
-        blocks: [{ type: "text", text: data.response! }],
-        timestamp: data.timestamp!,
-      };
-      setMessages((prev) => [...prev, assistantMsg]);
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let accumulated = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() ?? "";
+
+        for (const line of lines) {
+          const raw = line.startsWith("data:") ? line.slice(5).trim() : line.trim();
+          if (!raw) continue;
+          try {
+            const event = JSON.parse(raw) as {
+              type: string;
+              content?: string;
+              messageId?: string;
+              timestamp?: string;
+              message?: string;
+            };
+
+            if (event.type === "chunk" && event.content) {
+              accumulated += event.content;
+              setStreamingText(accumulated);
+            }
+
+            if (event.type === "done") {
+              const assistantMsg: Message = {
+                id: event.messageId!,
+                role: "assistant",
+                blocks: [{ type: "text", text: accumulated }],
+                timestamp: event.timestamp!,
+              };
+              setMessages((prev) => [...prev, assistantMsg]);
+              setStreamingText(null);
+            }
+
+            if (event.type === "error") {
+              throw new Error(event.message ?? "Erreur inconnue");
+            }
+          } catch (parseErr) {
+            if (parseErr instanceof SyntaxError) continue;
+            throw parseErr;
+          }
+        }
+      }
     } catch (err) {
-      console.error("[chat] Send error:", err);
-    } finally {
-      setIsTyping(false);
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error("[chat] Send error:", msg);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `err-${Date.now()}`,
+          role: "assistant" as const,
+          blocks: [{ type: "text" as const, text: `⚠️ ${msg}` }],
+          timestamp: new Date().toISOString(),
+        },
+      ]);
+      setStreamingText(null);
     }
-  }, [input, isTyping, activeConvId, convItems]);
+  }, [input, streamingText, activeConvId, convItems, messages]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -317,6 +451,7 @@ export default function ChatPage() {
   };
 
   const activeConv = convItems.find((c) => c.id === activeConvId);
+  const isStreaming = streamingText !== null;
 
   return (
     <div className="flex h-screen overflow-hidden">
@@ -341,14 +476,14 @@ export default function ChatPage() {
         <div className="flex flex-1 flex-col overflow-y-auto">
           {loadingMsgs ? (
             <MessagesSkeleton />
-          ) : !activeConvId || messages.length === 0 ? (
+          ) : !activeConvId || (messages.length === 0 && !isStreaming) ? (
             <EmptyState />
           ) : (
             <div className="mx-auto max-w-3xl space-y-6 px-6 py-6">
               {messages.map((msg) => (
                 <MessageBubble key={msg.id} message={msg} />
               ))}
-              {isTyping && <TypingIndicator />}
+              {isStreaming && <StreamingBubble text={streamingText ?? ""} />}
               <div ref={messagesEndRef} />
             </div>
           )}
@@ -369,11 +504,11 @@ export default function ChatPage() {
               />
               <button
                 onClick={handleSend}
-                disabled={!input.trim() || isTyping || !activeConvId}
+                disabled={!input.trim() || isStreaming || !activeConvId}
                 aria-label="Envoyer"
                 className={cn(
                   "flex h-7 w-7 shrink-0 items-center justify-center rounded-(--radius-sm) transition-colors duration-[--duration-base]",
-                  input.trim() && !isTyping && activeConvId
+                  input.trim() && !isStreaming && activeConvId
                     ? "bg-(--color-fg) text-(--color-bg) hover:opacity-90"
                     : "cursor-not-allowed text-(--color-fg-disabled)"
                 )}
