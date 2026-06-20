@@ -7,8 +7,6 @@ import { SectionHeader } from "@/components/ui/section-header";
 import { TrainingStateCard } from "@/components/ui/training-state-card";
 import { HealthCard } from "@/components/ui/health-card";
 import { MusicListeningCard, MusicRankingCard } from "@/components/ui/music-card";
-import { GoalCard } from "@/components/ui/goal-card";
-import { DayHeroCard } from "@/components/ui/day-hero-card";
 
 // ─── API types ─────────────────────────────────────────────────────────────
 
@@ -360,19 +358,6 @@ function HomepageContent({ data }: { data: HomepageData }) {
 
   return (
     <>
-      <DayHeroCard
-        extraCard={
-          <GoalCard
-            name="Marathon de la MaXi Race d'Annecy"
-            distance="42 km"
-            elevation="+1 600 m D+"
-            date="2026-05-31"
-            dateLabel="31 mai 2026"
-            prepStart="2026-04-01"
-          />
-        }
-      />
-
       <section>
         <SectionHeader label="Sport · Course à pied" />
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 lg:gap-4 lg:auto-rows-[280px]">
