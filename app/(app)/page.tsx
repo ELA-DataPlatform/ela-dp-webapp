@@ -186,6 +186,7 @@ function getFrenchDate(): string {
 export default function HomePage() {
   const [data, setData] = useState<HomepageData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
   const [today, setToday] = useState("");
 
   useEffect(() => {
@@ -211,16 +212,30 @@ export default function HomePage() {
     return () => clearTimeout(timeout);
   }, []);
 
+  const [reloadKey, setReloadKey] = useState(0);
+
   useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setFailed(false);
     apiFetch("/webapp/homepage")
       .then((r) => {
         if (!r.ok) throw new Error(`API ${r.status}`);
         return r.json();
       })
-      .then(setData)
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, []);
+      .then((d) => {
+        if (!cancelled) setData(d);
+      })
+      .catch(() => {
+        if (!cancelled) setFailed(true);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [reloadKey]);
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
@@ -255,7 +270,26 @@ export default function HomePage() {
         </div>
       ) : data ? (
         <HomepageContent data={data} />
-      ) : null}
+      ) : (
+        <div className="flex flex-col items-center gap-4 py-12 text-center">
+          <div className="space-y-1">
+            <p className="text-sm font-medium text-(--color-fg)">
+              {failed ? "Données indisponibles" : "Aucune donnée disponible"}
+            </p>
+            <p className="mx-auto max-w-[300px] text-sm text-(--color-fg-muted)">
+              {failed
+                ? "Impossible de récupérer tes données pour le moment. C'est généralement temporaire."
+                : "Les synchronisations n'ont rien renvoyé pour le moment."}
+            </p>
+          </div>
+          <button
+            onClick={() => setReloadKey((k) => k + 1)}
+            className="rounded-(--radius-sm) border border-(--color-border) bg-(--color-bg-elevated) px-3 py-2 text-sm font-medium text-(--color-fg) transition-colors hover:bg-(--color-bg-muted) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-accent)"
+          >
+            Réessayer
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -281,7 +315,7 @@ function HomepageContent({ data }: { data: HomepageData }) {
     ? [
         {
           label: "VO2 Max",
-          value: ts.vo2_max.toFixed(0),
+          value: (ts.vo2_max ?? 0).toFixed(0),
           detail: ts.vo2_max_status === "declining"
             ? "En baisse"
             : ts.vo2_max_status === "increasing"
@@ -290,8 +324,8 @@ function HomepageContent({ data }: { data: HomepageData }) {
         },
         {
           label: "Charge 7j",
-          value: ts.training_load_7d.toString(),
-          detail: `Cible ${ts.training_load_target_low}–${ts.training_load_target_high}`,
+          value: (ts.training_load_7d ?? 0).toString(),
+          detail: `Cible ${ts.training_load_target_low ?? "—"}–${ts.training_load_target_high ?? "—"}`,
         },
       ]
     : [];
@@ -301,7 +335,7 @@ function HomepageContent({ data }: { data: HomepageData }) {
   const activityCoords = lastActivity ? parsePolyline(lastActivity.polyline) : [];
   const activityStats = lastActivity
     ? [
-        { value: `${lastActivity.distance_km.toFixed(1)} km`, label: "Distance" },
+        { value: `${(lastActivity.distance_km ?? 0).toFixed(1)} km`, label: "Distance" },
         { value: lastActivity.duration_label, label: "Durée" },
         { value: fmtPace(lastActivity.pace_seconds_per_km), label: "Allure moy." },
         { value: `${lastActivity.avg_heart_rate_bpm} bpm`, label: "FC moy." },
@@ -395,7 +429,7 @@ function HomepageContent({ data }: { data: HomepageData }) {
             {running && (
               <HealthCard
                 title="Kilomètres"
-                avgValue={`${running.current_week_km.toFixed(1)} km`}
+                avgValue={`${(running.current_week_km ?? 0).toFixed(1)} km`}
                 primaryDelta={runningDeltaStr}
                 primaryDeltaTone={runningDeltaTone as "success" | "danger"}
                 trend={runningDays}
