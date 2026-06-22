@@ -261,37 +261,43 @@ export default function HomePage() {
 }
 
 function HomepageContent({ data }: { data: HomepageData }) {
+  // Chaque section est rendue indépendamment : si l'API renvoie un tableau
+  // vide pour l'une d'elles (trou de données côté pipeline), on masque la
+  // section concernée au lieu de faire planter toute la page.
+
   // ── Running ──────────────────────────────────────────────
-  const running = data.running[0];
-  const runningDays = running.days.slice(-10).map((d) => ({
+  const running = data.running?.[0] ?? null;
+  const runningDays = (running?.days ?? []).slice(-10).map((d) => ({
     day: d.day_label,
     value: d.distance_km,
   }));
-  const runningDeltaPct = Math.round(running.week_km_delta_pct);
+  const runningDeltaPct = Math.round(running?.week_km_delta_pct ?? 0);
   const runningDeltaStr = `${runningDeltaPct >= 0 ? "+" : ""}${runningDeltaPct}% vs sem. préc.`;
   const runningDeltaTone = runningDeltaPct >= 0 ? "success" : "danger";
 
   // ── Training state ────────────────────────────────────────
-  const ts = data.training_state[0];
-  const trainingMetrics = [
-    {
-      label: "VO2 Max",
-      value: ts.vo2_max.toFixed(0),
-      detail: ts.vo2_max_status === "declining"
-        ? "En baisse"
-        : ts.vo2_max_status === "increasing"
-        ? "En hausse"
-        : "Stable",
-    },
-    {
-      label: "Charge 7j",
-      value: ts.training_load_7d.toString(),
-      detail: `Cible ${ts.training_load_target_low}–${ts.training_load_target_high}`,
-    },
-  ];
+  const ts = data.training_state?.[0] ?? null;
+  const trainingMetrics = ts
+    ? [
+        {
+          label: "VO2 Max",
+          value: ts.vo2_max.toFixed(0),
+          detail: ts.vo2_max_status === "declining"
+            ? "En baisse"
+            : ts.vo2_max_status === "increasing"
+            ? "En hausse"
+            : "Stable",
+        },
+        {
+          label: "Charge 7j",
+          value: ts.training_load_7d.toString(),
+          detail: `Cible ${ts.training_load_target_low}–${ts.training_load_target_high}`,
+        },
+      ]
+    : [];
 
   // ── Last activity ─────────────────────────────────────────
-  const lastActivity = data.last_activity[0] ?? null;
+  const lastActivity = data.last_activity?.[0] ?? null;
   const activityCoords = lastActivity ? parsePolyline(lastActivity.polyline) : [];
   const activityStats = lastActivity
     ? [
@@ -307,23 +313,24 @@ function HomepageContent({ data }: { data: HomepageData }) {
     : undefined;
 
   // ── Health ────────────────────────────────────────────────
-  const health = data.health[0];
-  const validHealthDays = health.days.filter((d) => d.sleep_score !== null);
+  const health = data.health?.[0] ?? null;
+  const healthDays = health?.days ?? [];
+  const validHealthDays = healthDays.filter((d) => d.sleep_score !== null);
   const lastHealthDay = validHealthDays[validHealthDays.length - 1];
 
-  const sleepScoreTrend = health.days
+  const sleepScoreTrend = healthDays
     .filter((d) => d.sleep_score !== null)
     .map((d) => ({ day: d.day_label, value: d.sleep_score as number }));
 
-  const sleepDurationTrend = health.days
+  const sleepDurationTrend = healthDays
     .filter((d) => d.sleep_duration_minutes !== null)
     .map((d) => ({ day: d.day_label, value: d.sleep_duration_minutes as number }));
 
-  const hrvTrend = health.days
+  const hrvTrend = healthDays
     .filter((d) => d.hrv_morning_ms !== null)
     .map((d) => ({ day: d.day_label, value: d.hrv_morning_ms as number }));
 
-  const batteryTrend = health.days
+  const batteryTrend = healthDays
     .filter((d) => d.body_battery_at_sleep !== null && d.body_battery_at_wake !== null)
     .map((d) => ({
       day: d.day_label,
@@ -339,120 +346,151 @@ function HomepageContent({ data }: { data: HomepageData }) {
   const batteryDisplay = lastHealthDay ? `${lastHealthDay.body_battery_at_wake}` : "—";
 
   // ── Music trend ───────────────────────────────────────────
-  const musicTrend = data.music_trend[0];
-  const musicTrendDays = musicTrend.days.map((d) => ({
+  const musicTrend = data.music_trend?.[0] ?? null;
+  const musicTrendDays = (musicTrend?.days ?? []).map((d) => ({
     day: d.day_label,
     value: d.listening_minutes,
   }));
-  const musicDeltaStr = `${fmtDeltaSign(Math.round(musicTrend.delta_pct))}% vs préc.`;
+  const musicDeltaStr = `${fmtDeltaSign(Math.round(musicTrend?.delta_pct ?? 0))}% vs préc.`;
 
   // ── Music rankings ────────────────────────────────────────
-  const rankings = data.music_rankings[0];
-  const toRankItems = (entities: ApiRankingEntity[]) =>
-    entities.map((e) => ({
+  const rankings = data.music_rankings?.[0] ?? null;
+  const toRankItems = (entities: ApiRankingEntity[] | undefined) =>
+    (entities ?? []).map((e) => ({
       name: e.entity_name,
       time: e.listening_label,
       image: e.image_url,
       rankChange: parseRankChange(e.rank_change),
     }));
 
+  const showSport = !!(ts || running || lastActivity);
+  const showHealth = !!health;
+  const showMusic = !!(musicTrend || rankings);
+
+  if (!showSport && !showHealth && !showMusic) {
+    return (
+      <div className="py-12 text-center">
+        <p className="text-sm font-medium text-(--color-fg)">Aucune donnée disponible</p>
+        <p className="mx-auto mt-1 max-w-[280px] text-sm text-(--color-fg-muted)">
+          Les synchronisations n&apos;ont rien renvoyé pour le moment. Réessaie plus tard.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <>
-      <section>
-        <SectionHeader label="Sport · Course à pied" />
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 lg:gap-4 lg:auto-rows-[280px]">
-          <TrainingStateCard
-            state={ts.training_state}
-            metrics={trainingMetrics}
-            goal={ts.active_goal_name ?? undefined}
-            goalDaysLeft={ts.active_goal_days_left ?? undefined}
-          />
-          <HealthCard
-            title="Kilomètres"
-            avgValue={`${running.current_week_km.toFixed(1)} km`}
-            primaryDelta={runningDeltaStr}
-            primaryDeltaTone={runningDeltaTone as "success" | "danger"}
-            trend={runningDays}
-            chartType="bar"
-            tooltipFormatter={(v) => `${v.toFixed(1)} km`}
-          />
-          {lastActivity && (
-            <ActivityCard
-              name={lastActivity.activity_name}
-              date={lastActivity.activity_date_label}
-              meta={activityMeta}
-              stats={activityStats}
-              coordinates={activityCoords}
+      {showSport && (
+        <section>
+          <SectionHeader label="Sport · Course à pied" />
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 lg:gap-4 lg:auto-rows-[280px]">
+            {ts && (
+              <TrainingStateCard
+                state={ts.training_state}
+                metrics={trainingMetrics}
+                goal={ts.active_goal_name ?? undefined}
+                goalDaysLeft={ts.active_goal_days_left ?? undefined}
+              />
+            )}
+            {running && (
+              <HealthCard
+                title="Kilomètres"
+                avgValue={`${running.current_week_km.toFixed(1)} km`}
+                primaryDelta={runningDeltaStr}
+                primaryDeltaTone={runningDeltaTone as "success" | "danger"}
+                trend={runningDays}
+                chartType="bar"
+                tooltipFormatter={(v) => `${v.toFixed(1)} km`}
+              />
+            )}
+            {lastActivity && (
+              <ActivityCard
+                name={lastActivity.activity_name}
+                date={lastActivity.activity_date_label}
+                meta={activityMeta}
+                stats={activityStats}
+                coordinates={activityCoords}
+              />
+            )}
+          </div>
+        </section>
+      )}
+
+      {showHealth && health && (
+        <section className="mt-6 lg:mt-8">
+          <SectionHeader label="Santé · Récupération" />
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 lg:gap-4 lg:auto-rows-[240px]">
+            <HealthCard
+              title="Sleep Score"
+              avgValue={sleepScoreDisplay}
+              primaryDelta={`${fmtDeltaSign(health.delta_sleep_score)} pts vs moy.`}
+              primaryDeltaTone={health.delta_sleep_score_tone as "success" | "warning" | "danger" | "neutral"}
+              trend={sleepScoreTrend}
+              chartType="bar"
             />
-          )}
-        </div>
-      </section>
+            <HealthCard
+              title="Sommeil"
+              avgValue={sleepDurationDisplay}
+              primaryDelta={`${fmtDeltaSign(health.delta_sleep_minutes)} min vs moy.`}
+              primaryDeltaTone={health.delta_sleep_minutes > 0 ? "success" : health.delta_sleep_minutes < 0 ? "danger" : "neutral"}
+              trend={sleepDurationTrend}
+              chartType="bar"
+              tooltipFormatter={fmtDurationMin}
+            />
+            <HealthCard
+              title="Récupération"
+              avgValue={hrvDisplay}
+              primaryDelta={`${fmtDeltaSign(health.delta_hrv_ms)} ms vs moy.`}
+              primaryDeltaTone={health.delta_hrv_ms > 0 ? "success" : health.delta_hrv_ms < 0 ? "danger" : "neutral"}
+              trend={hrvTrend}
+              chartType="bar"
+            />
+            <HealthCard
+              title="Énergie"
+              avgValue={batteryDisplay}
+              primaryDelta={`${fmtDeltaSign(health.delta_body_battery)} vs moy.`}
+              primaryDeltaTone={health.delta_body_battery_tone as "success" | "warning" | "danger" | "neutral"}
+              trend={batteryTrend}
+              chartType="battery-bar"
+            />
+          </div>
+        </section>
+      )}
 
-      <section className="mt-6 lg:mt-8">
-        <SectionHeader label="Santé · Récupération" />
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 lg:gap-4 lg:auto-rows-[240px]">
-          <HealthCard
-            title="Sleep Score"
-            avgValue={sleepScoreDisplay}
-            primaryDelta={`${fmtDeltaSign(health.delta_sleep_score)} pts vs moy.`}
-            primaryDeltaTone={health.delta_sleep_score_tone as "success" | "warning" | "danger" | "neutral"}
-            trend={sleepScoreTrend}
-            chartType="bar"
-          />
-          <HealthCard
-            title="Sommeil"
-            avgValue={sleepDurationDisplay}
-            primaryDelta={`${fmtDeltaSign(health.delta_sleep_minutes)} min vs moy.`}
-            primaryDeltaTone={health.delta_sleep_minutes > 0 ? "success" : health.delta_sleep_minutes < 0 ? "danger" : "neutral"}
-            trend={sleepDurationTrend}
-            chartType="bar"
-            tooltipFormatter={fmtDurationMin}
-          />
-          <HealthCard
-            title="Récupération"
-            avgValue={hrvDisplay}
-            primaryDelta={`${fmtDeltaSign(health.delta_hrv_ms)} ms vs moy.`}
-            primaryDeltaTone={health.delta_hrv_ms > 0 ? "success" : health.delta_hrv_ms < 0 ? "danger" : "neutral"}
-            trend={hrvTrend}
-            chartType="bar"
-          />
-          <HealthCard
-            title="Énergie"
-            avgValue={batteryDisplay}
-            primaryDelta={`${fmtDeltaSign(health.delta_body_battery)} vs moy.`}
-            primaryDeltaTone={health.delta_body_battery_tone as "success" | "warning" | "danger" | "neutral"}
-            trend={batteryTrend}
-            chartType="battery-bar"
-          />
-        </div>
-      </section>
-
-      <section className="mt-6 lg:mt-8">
-        <SectionHeader label="Musique · Spotify" />
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 lg:gap-4 lg:auto-rows-[280px]">
-          <MusicListeningCard
-            trend={musicTrendDays}
-            totalTime={musicTrend.total_label}
-            delta={musicDeltaStr}
-            deltaTone={musicTrend.delta_tone as "success" | "warning" | "danger" | "neutral"}
-          />
-          <MusicRankingCard
-            title="Top Artistes"
-            items={toRankItems(rankings.artists)}
-            viewMoreHref="/music"
-          />
-          <MusicRankingCard
-            title="Top Albums"
-            items={toRankItems(rankings.albums)}
-            viewMoreHref="/music"
-          />
-          <MusicRankingCard
-            title="Top Titres"
-            items={toRankItems(rankings.tracks)}
-            viewMoreHref="/music"
-          />
-        </div>
-      </section>
+      {showMusic && (
+        <section className="mt-6 lg:mt-8">
+          <SectionHeader label="Musique · Spotify" />
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 lg:gap-4 lg:auto-rows-[280px]">
+            {musicTrend && (
+              <MusicListeningCard
+                trend={musicTrendDays}
+                totalTime={musicTrend.total_label}
+                delta={musicDeltaStr}
+                deltaTone={musicTrend.delta_tone as "success" | "warning" | "danger" | "neutral"}
+              />
+            )}
+            {rankings && (
+              <>
+                <MusicRankingCard
+                  title="Top Artistes"
+                  items={toRankItems(rankings.artists)}
+                  viewMoreHref="/music"
+                />
+                <MusicRankingCard
+                  title="Top Albums"
+                  items={toRankItems(rankings.albums)}
+                  viewMoreHref="/music"
+                />
+                <MusicRankingCard
+                  title="Top Titres"
+                  items={toRankItems(rankings.tracks)}
+                  viewMoreHref="/music"
+                />
+              </>
+            )}
+          </div>
+        </section>
+      )}
     </>
   );
 }
