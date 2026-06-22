@@ -39,7 +39,7 @@ export async function insertConversation(data: {
       id: data.id,
       user_id: data.userId,
       title: data.title,
-      created_at: BigQuery.timestamp(new Date()),
+      created_at: new Date().toISOString(),
     },
   ]);
 }
@@ -54,7 +54,7 @@ export async function insertMessage(data: {
       id: data.id,
       conversation_id: data.conversationId,
       role: data.role,
-      created_at: BigQuery.timestamp(new Date()),
+      created_at: new Date().toISOString(),
     },
   ]);
 }
@@ -75,7 +75,7 @@ export async function insertBlock(data: {
       position: data.position,
       type: data.type,
       content: JSON.stringify(data.block),
-      created_at: BigQuery.timestamp(new Date()),
+      created_at: new Date().toISOString(),
     },
   ]);
 }
