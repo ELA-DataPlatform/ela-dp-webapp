@@ -185,8 +185,29 @@ export async function POST(req: Request) {
 
         enqueue({ type: "done", messageId: asstMsgId, timestamp });
       } catch (err) {
-        const msg = err instanceof Error ? err.message : String(err);
-        console.error("[chat/POST] error:", msg);
+        // Les erreurs BigQuery (PartialFailureError) ont un message vide :
+        // le détail réel est dans `err.errors`. On le remonte pour ne plus
+        // afficher un "⚠️" muet côté client.
+        const e = err as {
+          message?: string;
+          name?: string;
+          errors?: unknown;
+          code?: unknown;
+          stack?: string;
+        };
+        let msg = e?.message || "";
+        if (!msg && e?.errors) msg = JSON.stringify(e.errors);
+        if (!msg) msg = e?.name || String(err) || "Erreur inconnue";
+        console.error(
+          "[chat/POST] error:",
+          e?.name,
+          "| code:",
+          e?.code,
+          "| msg:",
+          msg,
+          "| errors:",
+          JSON.stringify(e?.errors ?? null),
+        );
         enqueue({ type: "error", message: msg });
       } finally {
         controller.close();
