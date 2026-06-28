@@ -233,9 +233,11 @@ function Heatmap({ data }: { data: DayPoint[] }) {
     if (!el) return;
     const N = weeks.length;
     const compute = (w: number) => {
-      const c = Math.floor((w - HEATMAP_GAP * (N - 1)) / N);
-      // Keep cells readable; if they don't fit, the grid scrolls horizontally instead of shrinking to dust.
-      setCell(Math.max(10, Math.min(14, c)));
+      const c = (w - HEATMAP_GAP * (N - 1)) / N;
+      // Fill the container width on desktop; floor at 10px so the grid scrolls
+      // (rather than shrinking to dust) on narrow viewports, and cap at 22px so
+      // the 7 rows stay within the card height on very wide screens.
+      setCell(Math.max(10, Math.min(22, c)));
     };
     const ro = new ResizeObserver(([e]) => compute(e.contentRect.width));
     ro.observe(el);
@@ -823,8 +825,8 @@ export function ArtistView({ artistId }: { artistId?: string }) {
             </div>
 
             {/* Weekly listening curve — left 8 cols */}
-            <div className="rounded-(--radius-md) border border-(--color-border) bg-(--color-bg-elevated) p-4 lg:col-span-8 lg:h-[292px]">
-              <div className="mb-3 flex items-center justify-between">
+            <div className="overflow-hidden rounded-(--radius-md) border border-(--color-border) bg-(--color-bg-elevated) lg:col-span-8 lg:h-[292px]">
+              <div className="flex items-center justify-between border-b border-(--color-border) bg-(--color-bg-subtle) px-4 py-2.5">
                 <span className="text-2xs font-medium uppercase tracking-[0.08em] text-(--color-fg-muted)">
                   Temps d'écoute hebdomadaire
                 </span>
@@ -832,8 +834,10 @@ export function ArtistView({ artistId }: { artistId?: string }) {
                   moy. {fmtDuration(weeklyAvg)}/sem · 52 sem.
                 </span>
               </div>
-              <div className="h-[220px]">
-                <WeeklyCurve data={weekly} />
+              <div className="p-4">
+                <div className="h-[220px]">
+                  <WeeklyCurve data={weekly} />
+                </div>
               </div>
             </div>
 
@@ -843,8 +847,8 @@ export function ArtistView({ artistId }: { artistId?: string }) {
             </div>
 
             {/* Activity heatmap — left 8 cols */}
-            <div className="rounded-(--radius-md) border border-(--color-border) bg-(--color-bg-elevated) p-4 lg:col-span-8 lg:h-[292px]">
-              <div className="mb-3 flex items-center gap-6">
+            <div className="overflow-hidden rounded-(--radius-md) border border-(--color-border) bg-(--color-bg-elevated) lg:col-span-8 lg:h-[292px]">
+              <div className="flex items-center justify-between border-b border-(--color-border) bg-(--color-bg-subtle) px-4 py-2.5">
                 <span className="text-2xs font-medium uppercase tracking-[0.08em] text-(--color-fg-muted)">
                   Activité sur 365 jours
                 </span>
@@ -852,7 +856,9 @@ export function ArtistView({ artistId }: { artistId?: string }) {
                   {fmtDuration(yearMinutes)}
                 </span>
               </div>
-              <Heatmap data={daily} />
+              <div className="p-4">
+                <Heatmap data={daily} />
+              </div>
             </div>
 
             {/* Album gallery — full width */}
