@@ -12,8 +12,8 @@ import { apiFetch } from "@/lib/api";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-interface TrackEntry { name: string; album: string; time: string; plays: number }
-interface AlbumRankEntry { name: string; year: number; time: string; plays: number }
+interface TrackEntry { name: string; album: string; time: string; plays: number; imageUrl?: string }
+interface AlbumRankEntry { name: string; year: number; time: string; plays: number; imageUrl?: string }
 interface StudioAlbum {
   id: string;
   name: string; year: number;
@@ -101,15 +101,18 @@ function mapApiResponse(res: ApiArtistResponse): { artist: ArtistData; daily: Da
   const { summary, albums, listening_daily, tracks } = res;
   const daily = fillDailyData(listening_daily);
 
+  // Tracks carry no cover URL of their own — resolve it from their album.
+  const albumCover = new Map(albums.map(a => [a.album_name, a.album_image_url]));
+
   const topTracks = [...tracks]
     .sort((a, b) => a.artist_track_rank - b.artist_track_rank)
     .slice(0, 10)
-    .map(t => ({ name: t.track_name, album: t.album_name, time: fmtDuration(t.listening_time_min), plays: t.plays }));
+    .map(t => ({ name: t.track_name, album: t.album_name, time: fmtDuration(t.listening_time_min), plays: t.plays, imageUrl: albumCover.get(t.album_name) }));
 
   const topAlbums = [...albums]
     .sort((a, b) => b.listening_time_min - a.listening_time_min)
     .slice(0, 10)
-    .map(a => ({ name: a.album_name, year: a.release_year, time: fmtDuration(a.listening_time_min), plays: a.plays }));
+    .map(a => ({ name: a.album_name, year: a.release_year, time: fmtDuration(a.listening_time_min), plays: a.plays, imageUrl: a.album_image_url }));
 
   const artist: ArtistData = {
     id: summary.artist_id,
@@ -220,28 +223,38 @@ const HEAT_CLASS = [
 
 const HEATMAP_GAP = 2;
 const HEATMAP_YLABEL_W = 12;
-const HEATMAP_YLABEL_GAP = 8;
+const HEATMAP_HEADER_H = 18; // month-label row height above the grid
 
 function Heatmap({ data }: { data: DayPoint[] }) {
   const max = useMemo(() => Math.max(...data.map(d => d.minutes), 1), [data]);
   const { weeks, monthPositions } = useMemo(() => buildHeatmapGrid(data), [data]);
+  const rootRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [cell, setCell] = useState(11);
 
   useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
+    const sc = scrollRef.current, root = rootRef.current;
+    if (!sc || !root) return;
     const N = weeks.length;
-    const compute = (w: number) => {
-      const c = (w - HEATMAP_GAP * (N - 1)) / N;
-      // Fill the container width on desktop; floor at 10px so the grid scrolls
-      // (rather than shrinking to dust) on narrow viewports, and cap at 22px so
-      // the 7 rows stay within the card height on very wide screens.
-      setCell(Math.max(10, Math.min(22, c)));
+    const compute = () => {
+      const w = sc.clientWidth;
+      const h = root.clientHeight;
+      // Cell size that would fill the available width (whole year visible).
+      const byW = Math.max(10, (w - HEATMAP_GAP * (N - 1)) / N);
+      const naturalH = 7 * byW + 6 * HEATMAP_GAP + HEATMAP_HEADER_H;
+      // When the card is taller than the width-filled grid (narrow card), grow
+      // the cells to fill the height and let the grid scroll horizontally —
+      // today stays on the right edge. Otherwise just fill the width.
+      // Reserve room for the month labels, row gaps and the horizontal scrollbar.
+      const target = h > naturalH + 8
+        ? (h - HEATMAP_HEADER_H - 6 * HEATMAP_GAP - 10) / 7
+        : byW;
+      setCell(Math.max(10, Math.min(30, target)));
     };
-    const ro = new ResizeObserver(([e]) => compute(e.contentRect.width));
-    ro.observe(el);
-    compute(el.offsetWidth);
+    const ro = new ResizeObserver(compute);
+    ro.observe(sc);
+    ro.observe(root);
+    compute();
     return () => ro.disconnect();
   }, [weeks.length]);
 
@@ -254,7 +267,7 @@ function Heatmap({ data }: { data: DayPoint[] }) {
   const gridWidth = weeks.length * cell + (weeks.length - 1) * HEATMAP_GAP;
 
   return (
-    <div className="flex items-start gap-2">
+    <div ref={rootRef} className="flex items-start gap-2 lg:h-full">
       {/* Day-of-week labels stay outside the scroll container so they remain visible while the grid scrolls. */}
       <div
         className="flex shrink-0 flex-col"
@@ -268,7 +281,7 @@ function Heatmap({ data }: { data: DayPoint[] }) {
         ))}
       </div>
 
-      <div ref={scrollRef} className="scrollbar-none min-w-0 flex-1 overflow-x-auto pb-1">
+      <div ref={scrollRef} className="scrollbar-thin min-w-0 flex-1 overflow-x-auto pb-1">
         <div style={{ width: gridWidth }}>
           <div className="relative mb-0.5 h-4">
             {monthPositions.map(({ month, col }) => (
@@ -369,16 +382,42 @@ function WeeklyCurve({ data }: { data: WeekPoint[] }) {
 
 // ── Hero card ─────────────────────────────────────────────────────────────────
 
-function HeroCard({ artist }: { artist: ArtistData }) {
+function HeroCard({ artist, daily, weekly }: { artist: ArtistData; daily: DayPoint[]; weekly: WeekPoint[] }) {
   const initials = artist.name.split(/\s+/).slice(0, 2).map(w => w[0]).join("").toUpperCase();
   const studio = artist.albums.filter(a => a.isStudio);
   const completeStudio = studio.filter(a => a.listenedTracks >= a.totalTracks).length;
-  const stats = [
-    { label: "Depuis",         value: String(artist.firstListened) },
-    { label: "Titres écoutés", value: artist.distinctTracks.toLocaleString("fr-FR") },
-    { label: "Temps total",    value: fmtDuration(artist.totalMinutes) },
+
+  // Behavioural stats over the last 365 days (merged in from the former
+  // "Statistiques d'écoute" card). "Moy. hebdo" is dropped — it duplicates the
+  // weekly-curve header.
+  const habits = useMemo(() => {
+    const active = daily.filter(d => d.minutes > 0);
+    const avgActive = active.length ? Math.round(active.reduce((s, d) => s + d.minutes, 0) / active.length) : 0;
+    let max = 0, cur = 0;
+    for (const d of daily) { if (d.minutes > 0) { cur++; max = Math.max(max, cur); } else cur = 0; }
+    return {
+      activeDays: active.length,
+      avgActive,
+      maxDay: Math.max(...daily.map(d => d.minutes), 0),
+      maxWeek: Math.max(...weekly.map(w => w.minutes), 0),
+      streak: max,
+    };
+  }, [daily, weekly]);
+
+  // Two rows: identity/totals on top, 365-day habits below.
+  const totals = [
+    { label: "Depuis",          value: String(artist.firstListened) },
+    { label: "Titres écoutés",  value: artist.distinctTracks.toLocaleString("fr-FR") },
+    { label: "Temps total",     value: fmtDuration(artist.totalMinutes) },
     { label: "Albums complets", value: `${completeStudio}/${studio.length}` },
-    { label: "Rang all-time",  value: `#${artist.allTimeRank}` },
+    { label: "Rang all-time",   value: `#${artist.allTimeRank}` },
+  ];
+  const behaviour = [
+    { label: "Jours actifs",    value: String(habits.activeDays) },
+    { label: "Durée moy./jour", value: fmtDuration(habits.avgActive) },
+    { label: "Record journée",  value: fmtDuration(habits.maxDay) },
+    { label: "Record semaine",  value: fmtDuration(habits.maxWeek) },
+    { label: "Série max",       value: `${habits.streak}j` },
   ];
 
   return (
@@ -406,18 +445,26 @@ function HeroCard({ artist }: { artist: ArtistData }) {
         </div>
       </div>
 
-      <div className="mt-5 grid grid-cols-3 gap-x-4 gap-y-4 border-t border-(--color-border) pt-4 sm:grid-cols-5">
-        {stats.map(({ label, value }) => (
-          <div key={label} className="flex flex-col gap-1">
-            <span className="text-2xs font-medium uppercase tracking-[0.08em] text-(--color-fg-muted)">
-              {label}
-            </span>
-            <span className="font-mono text-xl font-medium tabular-nums leading-tight text-(--color-fg)">
-              {value}
-            </span>
-          </div>
-        ))}
-      </div>
+      {[totals, behaviour].map((row, ri) => (
+        <div
+          key={ri}
+          className={cn(
+            "grid grid-cols-3 gap-x-4 gap-y-4 border-t border-(--color-border) pt-4 sm:grid-cols-5",
+            ri === 0 ? "mt-5" : "mt-4"
+          )}
+        >
+          {row.map(({ label, value }) => (
+            <div key={label} className="flex flex-col gap-1">
+              <span className="text-2xs font-medium uppercase tracking-[0.08em] text-(--color-fg-muted)">
+                {label}
+              </span>
+              <span className="font-mono text-xl font-medium tabular-nums leading-tight text-(--color-fg)">
+                {value}
+              </span>
+            </div>
+          ))}
+        </div>
+      ))}
     </div>
   );
 }
@@ -512,18 +559,40 @@ function AlbumGallery({ albums }: { albums: StudioAlbum[] }) {
 
 // ── Rankings ──────────────────────────────────────────────────────────────────
 
+// Square cover thumbnail for ranking rows. Falls back to a deterministic
+// grayscale placeholder with initials when no real cover art is available.
+function CoverThumb({ name, imageUrl }: { name: string; imageUrl?: string }) {
+  const tone = COVER_TONES[hashId(name) % COVER_TONES.length];
+  return (
+    <div
+      className="relative h-10 w-10 shrink-0 overflow-hidden rounded-(--radius-sm) border border-(--color-border)"
+      style={{ background: tone.bg }}
+    >
+      {imageUrl ? (
+        <img src={imageUrl} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover" />
+      ) : (
+        <span className="absolute inset-0 flex items-center justify-center font-mono text-xs font-medium" style={{ color: tone.fg }}>
+          {coverInitials(name)}
+        </span>
+      )}
+    </div>
+  );
+}
+
+interface RankingEntry { name: string; sub?: string; time: string; plays: number; cover?: { imageUrl?: string; name?: string } }
+
 function TopRanking({
   title,
   entries,
   className,
 }: {
   title: string;
-  entries: { name: string; sub?: string; time: string; plays: number }[];
+  entries: RankingEntry[];
   className?: string;
 }) {
   return (
-    <div className={cn("overflow-hidden rounded-(--radius-md) border border-(--color-border) bg-(--color-bg-elevated)", className)}>
-      <div className="flex items-center justify-between border-b border-(--color-border) bg-(--color-bg-subtle) px-4 py-2.5">
+    <div className={cn("flex flex-col overflow-hidden rounded-(--radius-md) border border-(--color-border) bg-(--color-bg-elevated)", className)}>
+      <div className="flex shrink-0 items-center justify-between border-b border-(--color-border) bg-(--color-bg-subtle) px-4 py-2.5">
         <span className="text-2xs font-medium uppercase tracking-[0.08em] text-(--color-fg-muted)">{title}</span>
         {entries.length > 0 && (
           <span className="font-mono text-2xs tabular-nums text-(--color-fg-subtle)">{entries.length}</span>
@@ -531,82 +600,38 @@ function TopRanking({
       </div>
 
       {entries.length === 0 ? (
-        <div className="flex items-center justify-center py-12 text-sm text-(--color-fg-subtle)">
+        <div className="flex flex-1 items-center justify-center py-12 text-sm text-(--color-fg-subtle)">
           Données non disponibles
         </div>
       ) : (
-        entries.map((entry, i) => (
-          <div
-            key={`${entry.name}-${i}`}
-            className={cn(
-              "flex h-14 items-center gap-2.5 px-4 transition-colors hover:bg-(--color-bg-muted)",
-              i < entries.length - 1 && "border-b border-(--color-border)"
-            )}
-          >
-            <span className="w-5 shrink-0 text-right font-mono text-xs tabular-nums text-(--color-fg-subtle)">
-              {i + 1}
-            </span>
-            <div className="min-w-0 flex-1">
-              <div className="truncate text-sm font-medium text-(--color-fg)">{entry.name}</div>
-              {entry.sub && <div className="truncate text-xs text-(--color-fg-subtle)">{entry.sub}</div>}
+        // Fixed-height rows, top-aligned. On desktop the card has a fixed
+        // height so the list area scrolls when there are many albums and simply
+        // leaves empty space below when there are few — rows never stretch.
+        <div className="flex-1 overflow-y-auto">
+          {entries.map((entry, i) => (
+            <div
+              key={`${entry.name}-${i}`}
+              className={cn(
+                "flex h-14 items-center gap-2.5 px-4 transition-colors hover:bg-(--color-bg-muted)",
+                i < entries.length - 1 && "border-b border-(--color-border)"
+              )}
+            >
+              <span className="w-4 shrink-0 text-right font-mono text-xs tabular-nums text-(--color-fg-subtle)">
+                {i + 1}
+              </span>
+              {entry.cover && <CoverThumb name={entry.cover.name ?? entry.name} imageUrl={entry.cover.imageUrl} />}
+              <div className="min-w-0 flex-1">
+                <div className="truncate text-sm font-medium text-(--color-fg)">{entry.name}</div>
+                {entry.sub && <div className="truncate text-xs text-(--color-fg-subtle)">{entry.sub}</div>}
+              </div>
+              <div className="shrink-0 text-right">
+                <div className="font-mono text-xs font-medium tabular-nums text-(--color-fg)">{entry.time}</div>
+                <div className="font-mono text-2xs tabular-nums text-(--color-fg-subtle)">{entry.plays}×</div>
+              </div>
             </div>
-            <div className="shrink-0 text-right">
-              <div className="font-mono text-xs font-medium tabular-nums text-(--color-fg)">{entry.time}</div>
-              <div className="font-mono text-2xs tabular-nums text-(--color-fg-subtle)">{entry.plays}×</div>
-            </div>
-          </div>
-        ))
+          ))}
+        </div>
       )}
-    </div>
-  );
-}
-
-// ── Listening stats card ──────────────────────────────────────────────────────
-
-function ListeningStats({ daily, weekly, className }: { daily: DayPoint[]; weekly: WeekPoint[]; className?: string }) {
-  const activeDays = useMemo(() => daily.filter(d => d.minutes > 0).length, [daily]);
-  const maxDay = useMemo(() => Math.max(...daily.map(d => d.minutes), 0), [daily]);
-  const maxWeek = useMemo(() => Math.max(...weekly.map(w => w.minutes), 0), [weekly]);
-  const streak = useMemo(() => {
-    let max = 0, cur = 0;
-    for (const d of daily) { if (d.minutes > 0) { cur++; max = Math.max(max, cur); } else cur = 0; }
-    return max;
-  }, [daily]);
-  const avgActive = useMemo(() => {
-    const active = daily.filter(d => d.minutes > 0);
-    return active.length ? Math.round(active.reduce((s, d) => s + d.minutes, 0) / active.length) : 0;
-  }, [daily]);
-  const weeklyAvg = useMemo(() => {
-    const total = daily.reduce((s, d) => s + d.minutes, 0);
-    return Math.round(total / 52);
-  }, [daily]);
-
-  const cells = [
-    { label: "Jours actifs",    value: String(activeDays),      sub: "sur 365" },
-    { label: "Durée moy./jour", value: fmtDuration(avgActive),  sub: "jours actifs seulement" },
-    { label: "Record journée",  value: fmtDuration(maxDay),     sub: "en une journée" },
-    { label: "Record semaine",  value: fmtDuration(maxWeek),    sub: "en une semaine" },
-    { label: "Série max",       value: `${streak}j`,            sub: "consécutifs" },
-    { label: "Moy. hebdo",      value: fmtDuration(weeklyAvg),  sub: "sur 52 semaines" },
-  ];
-
-  return (
-    <div className={cn("overflow-hidden rounded-(--radius-md) border border-(--color-border) bg-(--color-bg-elevated)", className)}>
-      <div className="flex items-center justify-between border-b border-(--color-border) bg-(--color-bg-subtle) px-4 py-2.5">
-        <span className="text-2xs font-medium uppercase tracking-[0.08em] text-(--color-fg-muted)">
-          Statistiques d'écoute
-        </span>
-        <span className="font-mono text-2xs tabular-nums text-(--color-fg-subtle)">365 j</span>
-      </div>
-      <div className="grid grid-cols-2 gap-px bg-(--color-border) sm:grid-cols-3">
-        {cells.map(({ label, value, sub }) => (
-          <div key={label} className="flex flex-col gap-1 bg-(--color-bg-elevated) p-4">
-            <span className="text-2xs font-medium uppercase tracking-[0.08em] text-(--color-fg-muted)">{label}</span>
-            <span className="font-mono text-xl font-medium tabular-nums leading-tight text-(--color-fg)">{value}</span>
-            <span className="text-2xs text-(--color-fg-subtle)">{sub}</span>
-          </div>
-        ))}
-      </div>
     </div>
   );
 }
@@ -723,13 +748,12 @@ function BentoSkeleton() {
   return (
     <div className="p-4">
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-        <Sk className="h-[168px] lg:col-span-12" />
-        <Sk className="h-[276px] lg:col-span-8 lg:h-[292px]" />
+        <Sk className="h-[260px] lg:col-span-12" />
+        <Sk className="h-[276px] lg:col-span-4 lg:h-[292px]" />
         <Sk className="h-[400px] lg:col-span-4 lg:row-span-2 lg:h-[600px]" />
-        <Sk className="h-[200px] lg:col-span-8 lg:h-[292px]" />
+        <Sk className="h-[400px] lg:col-span-4 lg:row-span-2 lg:h-[600px]" />
+        <Sk className="h-[200px] lg:col-span-4 lg:h-[292px]" />
         <Sk className="h-[216px] lg:col-span-12" />
-        <Sk className="h-[600px] lg:col-span-6" />
-        <Sk className="h-[400px] lg:col-span-6 lg:h-[600px]" />
       </div>
     </div>
   );
@@ -777,10 +801,12 @@ export function ArtistView({ artistId }: { artistId?: string }) {
 
   const topTracksForRanking = useMemo(() => (artist?.topTracks ?? []).map(t => ({
     name: t.name, sub: t.album, time: t.time, plays: t.plays,
+    cover: { imageUrl: t.imageUrl, name: t.album },
   })), [artist]);
 
   const topAlbumsForRanking = useMemo(() => (artist?.topAlbums ?? []).map(a => ({
     name: a.name, sub: String(a.year), time: a.time, plays: a.plays,
+    cover: { imageUrl: a.imageUrl },
   })), [artist]);
 
   return (
@@ -819,13 +845,13 @@ export function ArtistView({ artistId }: { artistId?: string }) {
         <div className="p-4">
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
 
-            {/* Hero — full width */}
+            {/* Hero — full width (identity + 365-day stats) */}
             <div className="lg:col-span-12">
-              <HeroCard artist={artist} />
+              <HeroCard artist={artist} daily={daily} weekly={weekly} />
             </div>
 
-            {/* Weekly listening curve — left 8 cols */}
-            <div className="overflow-hidden rounded-(--radius-md) border border-(--color-border) bg-(--color-bg-elevated) lg:col-span-8 lg:h-[292px]">
+            {/* Weekly listening curve — left 4 cols */}
+            <div className="overflow-hidden rounded-(--radius-md) border border-(--color-border) bg-(--color-bg-elevated) lg:col-span-4 lg:h-[292px]">
               <div className="flex items-center justify-between border-b border-(--color-border) bg-(--color-bg-subtle) px-4 py-2.5">
                 <span className="text-2xs font-medium uppercase tracking-[0.08em] text-(--color-fg-muted)">
                   Temps d'écoute hebdomadaire
@@ -841,14 +867,19 @@ export function ArtistView({ artistId }: { artistId?: string }) {
               </div>
             </div>
 
-            {/* Top Albums — right 4 cols, spans 2 rows */}
+            {/* Top Albums — 4 cols, spans 2 rows */}
             <div className="lg:col-span-4 lg:row-span-2 lg:h-[600px]">
-              <TopRanking title="Top albums" entries={topAlbumsForRanking} />
+              <TopRanking title="Top albums" entries={topAlbumsForRanking} className="lg:h-full" />
             </div>
 
-            {/* Activity heatmap — left 8 cols */}
-            <div className="overflow-hidden rounded-(--radius-md) border border-(--color-border) bg-(--color-bg-elevated) lg:col-span-8 lg:h-[292px]">
-              <div className="flex items-center justify-between border-b border-(--color-border) bg-(--color-bg-subtle) px-4 py-2.5">
+            {/* Top Tracks — 4 cols, spans 2 rows, next to Top albums */}
+            <div className="lg:col-span-4 lg:row-span-2 lg:h-[600px]">
+              <TopRanking title="Top titres" entries={topTracksForRanking} className="lg:h-full" />
+            </div>
+
+            {/* Activity heatmap — left 4 cols */}
+            <div className="overflow-hidden rounded-(--radius-md) border border-(--color-border) bg-(--color-bg-elevated) lg:col-span-4 lg:flex lg:h-[292px] lg:flex-col">
+              <div className="flex shrink-0 items-center justify-between border-b border-(--color-border) bg-(--color-bg-subtle) px-4 py-2.5">
                 <span className="text-2xs font-medium uppercase tracking-[0.08em] text-(--color-fg-muted)">
                   Activité sur 365 jours
                 </span>
@@ -856,7 +887,7 @@ export function ArtistView({ artistId }: { artistId?: string }) {
                   {fmtDuration(yearMinutes)}
                 </span>
               </div>
-              <div className="p-4">
+              <div className="p-4 lg:min-h-0 lg:flex-1">
                 <Heatmap data={daily} />
               </div>
             </div>
@@ -864,16 +895,6 @@ export function ArtistView({ artistId }: { artistId?: string }) {
             {/* Album gallery — full width */}
             <div className="lg:col-span-12">
               <AlbumGallery albums={artist.albums} />
-            </div>
-
-            {/* Top Tracks — left 6 cols */}
-            <div className="lg:col-span-6">
-              <TopRanking title="Top titres" entries={topTracksForRanking} />
-            </div>
-
-            {/* Listening stats — right 6 cols */}
-            <div className="lg:col-span-6">
-              <ListeningStats daily={daily} weekly={weekly} />
             </div>
 
           </div>
